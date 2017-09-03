@@ -1,4 +1,5 @@
 define("skylark-jquery/core",[ 
+	"skylark/skylark", 
 	"skylark/langx", 
 	"skylark/noder", 
 	"skylark/datax", 
@@ -6,7 +7,7 @@ define("skylark-jquery/core",[
 	"skylark/finder", 
 	"skylark/styler", 
 	"skylark/query" 
-],function(langx,noder,datax,eventer,finder,styler,query){ 
+],function(skylark,langx,noder,datax,eventer,finder,styler,query){ 
 	var filter = Array.prototype.filter,
 		slice = Array.prototype.slice; 
 	 
@@ -284,6 +285,8 @@ define("skylark-jquery/core",[
 	
 	    };
     })(query);
+
+    query.skylark = skylark;
      
     return window.jQuery = window.$ = query; 
 }); 
