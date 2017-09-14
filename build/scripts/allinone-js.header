@@ -4,14 +4,32 @@
   	  isAmd = (typeof define === 'function' && define.amd),
   	  isCmd = (!isAmd && typeof exports !== 'undefined');
 
-  // Set up Backbone appropriately for the environment. Start with AMD.
   if (!isAmd && !define) {
-	var map = {};
+    var map = {};
+    function absolute(relative, base) {
+        if (relative[0]!==".") {
+          return relative;
+        }
+        var stack = base.split("/"),
+            parts = relative.split("/");    
+        stack.pop(); 
+        for (var i=0; i<parts.length; i++) {
+            if (parts[i] == ".")
+                continue;
+            if (parts[i] == "..")
+                stack.pop();
+            else
+                stack.push(parts[i]);
+        }
+        return stack.join("/");
+    }
     define = globals.define = function(id, deps, factory) {
         if (typeof factory == 'function') {
             map[id] = {
                 factory: factory,
-                deps: deps,
+                deps: deps.map(function(dep){
+                  return absolute(dep,id);
+                }),
                 exports: null
             };
             require(id);
@@ -49,15 +67,7 @@
       return $;
     });
   } else {    
-    var jQuery ;
-    require([
-      "skylark-jquery/core",
-      "skylark-jquery/callbacks",
-      "skylark-jquery/deferred",
-      "skylark-jquery/ajax"
-    ],function($){
-      jQuery = $;
-    });
+    var jQuery =  require("skylark-jquery/core");
 
     if (isCmd) {
       exports = jQuery;
