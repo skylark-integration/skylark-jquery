@@ -19,16 +19,16 @@ http://registry.skylarkjs.org/packages/skylark-jquery/v0.9.0/uncompressed/skylar
 ## Examples 
 please refer to the examples:
 - Bootstrap-Form-Builder-minikomi  
-http://examples.skylarkjs.org/skylark-jquery/Bootstrap-Form-Builder-minikomi/index-jquery.html   the version using original jquery
+http://examples.skylarkjs.org/skylark-jquery/Bootstrap-Form-Builder-minikomi/index-jquery.html   the version using original jquery  
 http://examples.skylarkjs.org/skylark-jquery/Bootstrap-Form-Builder-minikomi/index-skylark.html  the version using skylark-jquery
 - etch  
-http://examples.skylarkjs.org/skylark-jquery/etch/demo/demo.jquery.html   the version using original jquery
+http://examples.skylarkjs.org/skylark-jquery/etch/demo/demo.jquery.html   the version using original jquery  
 http://examples.skylarkjs.org/skylark-jquery/etch/demo/demo.skylark-jquery.html the version using skylark-jquery
 - grapesjs  
-http://examples.skylarkjs.org/skylark-jquery/grapesjs/index.jquery.html   the version using original jquery
+http://examples.skylarkjs.org/skylark-jquery/grapesjs/index.jquery.html   the version using original jquery  
 http://examples.skylarkjs.org/skylark-jquery/grapesjs/index.skylark-jquery.html the version using skylark-jquery
 - jstinker  
-http://examples.skylarkjs.org/skylark-jquery/jstinker/index.jquery.html   the version using original jquery
+http://examples.skylarkjs.org/skylark-jquery/jstinker/index.jquery.html   the version using original jquery  
 http://examples.skylarkjs.org/skylark-jquery/jstinker/index.skyalrk-jquery.html the version using skylark-jquery
 
 ## Bugs and feature requests
