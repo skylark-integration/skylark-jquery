@@ -20,9 +20,7 @@
   "author": "Hudaokeji Co.,Ltd",
   "license": "MIT",
   "bugs": "https://github.com/skylarkjs/skylark-jquery/issues",
-  "dependencies": {
-
-  },
+  "dependencies": {},
   "devDependencies": {
     "del": "^1.2.1",
     "gulp": "^3.9.0",
@@ -33,6 +31,7 @@
     "gulp-header": "^1.7.1",
     "gulp-rename": "~1.2.2",
     "gulp-replace": "^0.6.1",
+    "gulp-requirejs": "^1.0.0",
     "gulp-sourcemaps": "^1.5.2",
     "gulp-uglify": "^1.5.4",
     "gulp-usemin": "^0.3.11",

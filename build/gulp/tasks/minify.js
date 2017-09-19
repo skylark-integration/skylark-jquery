@@ -4,7 +4,7 @@ var gulp = require('gulp'),
     header = require('gulp-header'),
     footer = require('gulp-footer'),
     sourceMaps = require('gulp-sourcemaps'),
-    amdOptimize = require('gulp-amd-optimizer'),
+    amdOptimize = require('gulp-requirejs'),
     uglify = require('gulp-uglify'),
     replace = require('gulp-replace'),
     rename = require("gulp-rename"),
@@ -16,54 +16,64 @@ var src = [util.src +  "**/*.js"];
 
 var dest = util.dest;
 
+
+var dest = util.dest;
+
 var requireConfig = {
     baseUrl: util.src,
+    out : util.pkg.name + ".js",
+    packages : [{
+       name : "skylark-utils" ,
+       location :  util.lib+"skylark-utils-v0.9.0/uncompressed/skylark-utils"
+   },
+    {
+       name : util.pkg.name ,
+       location :  util.src,
+       main : "core"
+
+    }],
     paths: {
-//        "skylark-jquery" : util.src+"skylark-jquery"
-       "skylark" : util.lib + "skylark"
     },
+
     include: [
+        util.pkg.name + "/ajax",
+        util.pkg.name + "/callbacks",
+        util.pkg.name + "/core",
+        util.pkg.name + "/deferred"
     ],
     exclude: [
-        "skylark"
+        "skylark-utils"
     ]
 };
 
-requireConfig.paths[util.pkg.name] = util.pkg.name;
-
-
-var options = {
-    umd: false
-};
 
 module.exports = function() {
     var p =  new Promise(function(resolve, reject) {
         gulp.src(src)
-            .pipe(amdOptimize(requireConfig, options))
-            .on("error", reject)
-            .pipe(concat(util.pkg.name + "-all.js"))
-            .pipe(header(fs.readFileSync(util.allinoneHeader, 'utf8')))
-            .pipe(footer(fs.readFileSync(util.allinoneFooter, 'utf8')))
-            .pipe(gulp.dest(dest+util.pkg.name))
-            .pipe(rename(util.pkg.name + "-all.min.js"))
+            .pipe(sourceMaps.init())
             .pipe(uglify())
             .on("error", reject)
+            .pipe(header(util.banner, {
+                pkg: util.pkg
+            }) )
+            .pipe(sourceMaps.write("sourcemaps"))
             .pipe(gulp.dest(dest+util.pkg.name))
             .on("end",resolve);
     });
 
     return p.then(function(){
-        gulp.src(dest+util.pkg.name + "/" + util.pkg.name + "-all.js")
+        return amdOptimize(requireConfig)
+            .on("error",gutil.log)
+            .pipe(sourceMaps.init())
+            .pipe(header(fs.readFileSync(util.allinoneHeader, 'utf8')))
+            .pipe(footer(fs.readFileSync(util.allinoneFooter, 'utf8')))
+            .pipe(uglify())
+            .on("error",gutil.log)
             .pipe(header(util.banner, {
                 pkg: util.pkg
             })) 
-            .pipe(gulp.dest(dest+util.pkg.name));  
-
-        gulp.src(dest+util.pkg.name + "/" + util.pkg.name + "-all.min.js")
-            .pipe(header(util.banner, {
-                pkg: util.pkg
-            })) 
-            .pipe(gulp.dest(dest+util.pkg.name));  
+            .pipe(sourceMaps.write("sourcemaps"))
+            .pipe(gulp.dest(dest));
 
     });
 

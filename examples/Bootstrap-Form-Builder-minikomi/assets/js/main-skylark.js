@@ -1,28 +1,21 @@
 require.config({
   baseUrl: "assets/js/lib/"
-  ,map: {
-    '*': {
-      'jquery': 'skylark/query'
-  	}
-  }
   , shim: {
     'backbone': {
-      deps: ['underscore', 'skylark/query'],
+      deps: ['underscore', 'jquery'],
       exports: 'Backbone'
     },
     'underscore': {
       exports: '_'
     },
     'bootstrap': {
-      deps: ['skylark/query'],
+      deps: ['jquery'],
       exports: '$.fn.popover'
     }
   }
-  ,packages : [
-     { name: "skylark", location: "../../../../../../src/skylark" }
-  ]
   , paths: {
-    app         : ".."
+    jquery         : "http://registry.skylarkjs.org/packages/skylark-jquery/v0.9.0/uncompressed/skylark-jquery-all"
+    ,app         : ".."
     , collections : "../collections"
     , data        : "../data"
     , models      : "../models"

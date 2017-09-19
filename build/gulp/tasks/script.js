@@ -1,23 +1,68 @@
 var gulp = require('gulp'),
+    concat = require('gulp-concat'),
     gutil = require('gulp-util'),
     header = require('gulp-header'),
+    footer = require('gulp-footer'),
     sourceMaps = require('gulp-sourcemaps'),
+    amdOptimize = require('gulp-requirejs'),
     uglify = require('gulp-uglify'),
-    util = require('../utils');
+    replace = require('gulp-replace'),
+    rename = require("gulp-rename"),
+    util = require('../utils'),
+     fs = require('fs');
 
 
-var src = [util.src + '**/*.js'];
+var src = [util.src +  "**/*.js"];
 
-var dest = util.dest;
+var dest = util.dest+"uncompressed/";
+
+var requireConfig = {
+    baseUrl: util.src,
+    out : util.pkg.name + ".js",
+    packages : [{
+       name : "skylark-utils" ,
+       location :  util.lib+"skylark-utils-v0.9.0/uncompressed/skylark-utils"
+   },
+    {
+       name : util.pkg.name ,
+       location :  util.src,
+       main : "core"
+
+    }],
+    paths: {
+    },
+
+    include: [
+        util.pkg.name + "/ajax",
+        util.pkg.name + "/callbacks",
+        util.pkg.name + "/core",
+        util.pkg.name + "/deferred"
+    ],
+    exclude: [
+        "skylark-utils"
+    ]
+};
+
 
 module.exports = function() {
-    return gulp.src(src)
-        .pipe(sourceMaps.init())
-        .pipe(sourceMaps.write())
-        .pipe(uglify())
-        .on("error", gutil.log)
+    var p =  new Promise(function(resolve, reject) {
+     gulp.src(src)
         .pipe(header(util.banner, {
             pkg: util.pkg
         }) )
-        .pipe(gulp.dest(dest));
+        .on("error", reject)
+        .pipe(gulp.dest(dest+util.pkg.name))
+        .on("end",resolve);
+    });
+
+    return p.then(function(){
+        return amdOptimize(requireConfig)
+            .pipe(header(fs.readFileSync(util.allinoneHeader, 'utf8')))
+            .pipe(footer(fs.readFileSync(util.allinoneFooter, 'utf8')))
+            .pipe(header(util.banner, {
+                pkg: util.pkg
+            })) 
+            .pipe(gulp.dest(dest));
+    })
+
 };
