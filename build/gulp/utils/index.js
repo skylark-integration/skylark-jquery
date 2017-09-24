@@ -14,7 +14,8 @@ var banner = ['/**',
 
 module.exports = {
     src: '../src/',
-    lib: '../lib/',
+    lib_langx: '../node_modules/skylark-langx/dist/',
+    lib_utils: '../node_modules/skylark-utils/dist/',
     dest: '../dist/',
     banner: banner,
     allinone: 'skylark-jquery/skylark-jquery-all',

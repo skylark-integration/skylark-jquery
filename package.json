@@ -1,6 +1,6 @@
 {
   "name": "skylark-jquery",
-  "version": "0.9.2",
+  "version": "0.9.3",
   "description": "The skylark plugin library for fully compatible API with jquery.",
   "main": "-",
   "scripts": {
@@ -36,7 +36,9 @@
     "gulp-uglify": "^1.5.4",
     "gulp-usemin": "^0.3.11",
     "gulp-util": "^3.0.6",
-    "run-sequence": "^2.1.0"
+    "run-sequence": "^2.1.0",
+    "skylark-langx": "^0.9.1",
+    "skylark-utils": "^0.9.2"
   },
   "engines": {
     "node": ">=0.8.0"
