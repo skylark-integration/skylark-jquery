@@ -1,7 +1,7 @@
 /**
  * skylark-jquery - The skylark plugin library for fully compatible API with jquery.
  * @author Hudaokeji Co.,Ltd
- * @version v0.9.0
+ * @version v0.9.3
  * @link www.skylarkjs.org
  * @license MIT
  */
@@ -85,14 +85,18 @@
 
 })(function(define,require) {
 
-define('skylark-utils/skylark',[], function() {
+define('skylark-langx/skylark',[], function() {
     var skylark = {
 
     };
     return skylark;
 });
 
-define('skylark-utils/langx',["./skylark"], function(skylark) {
+define('skylark-utils/skylark',["skylark-langx/skylark"], function(skylark) {
+    return skylark;
+});
+
+define('skylark-langx/langx',["./skylark"], function(skylark) {
     var toString = {}.toString,
         concat = Array.prototype.concat,
         indexOf = Array.prototype.indexOf,
@@ -188,6 +192,90 @@ define('skylark-utils/langx',["./skylark"], function(skylark) {
             return ctor;
         }
     })();
+
+
+    function debounce(fn, wait) {
+        var timeout,
+            args,
+            later = function() {
+                fn.apply(null, args);
+            };
+
+        return function() {
+            args = arguments;
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    var Deferred = function() {
+        this.promise = new Promise(function(resolve, reject) {
+            this._resolve = resolve;
+            this._reject = reject;
+        }.bind(this));
+
+        this.resolve = Deferred.prototype.resolve.bind(this);
+        this.reject = Deferred.prototype.reject.bind(this);
+    };
+
+    Deferred.prototype.resolve = function(value) {
+        this._resolve.call(this.promise, value);
+        return this;
+    };
+
+    Deferred.prototype.reject = function(reason) {
+        this._reject.call(this.promise, reason);
+        return this;
+    };
+
+
+    Deferred.prototype.then = function(callback, errback, progback) {
+        return this.promise.then(callback, errback, progback);
+    };
+
+    Deferred.all = function(array) {
+        return Promise.all(array);
+    };
+
+    Deferred.first = function(array) {
+        return Promise.race(array);
+    };
+
+    Deferred.when = function(valueOrPromise, callback, errback, progback) {
+        var receivedPromise = valueOrPromise && typeof valueOrPromise.then === "function";
+        var nativePromise = receivedPromise && valueOrPromise instanceof Promise;
+
+        if (!receivedPromise) {
+            if (arguments.length > 1) {
+                return callback ? callback(valueOrPromise) : valueOrPromise;
+            } else {
+                return new Deferred().resolve(valueOrPromise);
+            }
+        } else if (!nativePromise) {
+            var deferred = new Deferred(valueOrPromise.cancel);
+            valueOrPromise.then(deferred.resolve, deferred.reject, deferred.progress);
+            valueOrPromise = deferred.promise;
+        }
+
+        if (callback || errback || progback) {
+            return valueOrPromise.then(callback, errback, progback);
+        }
+        return valueOrPromise;
+    };
+
+    Deferred.reject = function(err) {
+        var d = new Deferred();
+        d.reject(err);
+        return d.promise;
+    };
+
+    Deferred.resolve = function(data) {
+        var d = new Deferred();
+        d.resolve(data);
+        return d.promise;
+    };
+
+    Deferred.immediate = Deferred.resolve;
 
     var Evented = createClass({
         on: function(events,selector,data,callback,ctx,/*used internally*/one) {
@@ -645,6 +733,11 @@ define('skylark-utils/langx',["./skylark"], function(skylark) {
         return flatten(values)
     }
 
+    function nextTick(fn) {
+        requestAnimationFrame(fn);
+        return this;
+    }
+
     function proxy(fn, context) {
         var args = (2 in arguments) && slice.call(arguments, 2)
         if (isFunction(fn)) {
@@ -842,6 +935,10 @@ define('skylark-utils/langx',["./skylark"], function(skylark) {
 
         dasherize: dasherize,
 
+        debounce: debounce,
+
+        Deferred: Deferred,
+
         Evented: Evented,
 
         deserializeValue: deserializeValue,
@@ -898,6 +995,8 @@ define('skylark-utils/langx',["./skylark"], function(skylark) {
 
         mixin: mixin,
 
+        nextTick : nextTick,
+
         proxy: proxy,
 
         removeItem: removeItem,
@@ -933,10 +1032,214 @@ define('skylark-utils/langx',["./skylark"], function(skylark) {
     return skylark.langx = langx;
 });
 
-define('skylark-utils/noder',[
+define('skylark-utils/langx',[
+    "skylark-langx/langx"
+], function(langx) {
+    return langx;
+});
+
+define('skylark-utils/styler',[
     "./skylark",
     "./langx"
 ], function(skylark, langx) {
+    var every = Array.prototype.every,
+        forEach = Array.prototype.forEach,
+        camelCase = langx.camelCase,
+        dasherize = langx.dasherize;
+
+    function maybeAddPx(name, value) {
+        return (typeof value == "number" && !cssNumber[dasherize(name)]) ? value + "px" : value
+    }
+
+    var cssNumber = {
+            'column-count': 1,
+            'columns': 1,
+            'font-weight': 1,
+            'line-height': 1,
+            'opacity': 1,
+            'z-index': 1,
+            'zoom': 1
+        },
+        classReCache = {
+
+        };
+
+    function classRE(name) {
+        return name in classReCache ?
+            classReCache[name] : (classReCache[name] = new RegExp('(^|\\s)' + name + '(\\s|$)'));
+    }
+
+    // access className property while respecting SVGAnimatedString
+    function className(node, value) {
+        var klass = node.className || '',
+            svg = klass && klass.baseVal !== undefined
+
+        if (value === undefined) return svg ? klass.baseVal : klass
+        svg ? (klass.baseVal = value) : (node.className = value)
+    }
+
+
+    var elementDisplay = {};
+
+    function defaultDisplay(nodeName) {
+        var element, display
+        if (!elementDisplay[nodeName]) {
+            element = document.createElement(nodeName)
+            document.body.appendChild(element)
+            display = getComputedStyle(element, '').getPropertyValue("display")
+            element.parentNode.removeChild(element)
+            display == "none" && (display = "block")
+            elementDisplay[nodeName] = display
+        }
+        return elementDisplay[nodeName]
+    }
+
+    function show(elm) {
+        styler.css(elm, "display", "");
+        if (styler.css(elm, "display") == "none") {
+            styler.css(elm, "display", defaultDisplay(elm.nodeName));
+        }
+        return this;
+    }
+
+    function isInvisible(elm) {
+        return styler.css(elm, "display") == "none" || styler.css(elm, "opacity") == 0;
+    }
+
+    function hide(elm) {
+        styler.css(elm, "display", "none");
+        return this;
+    }
+
+    function addClass(elm, name) {
+        if (!name) return this
+        var cls = className(elm),
+            names;
+        if (langx.isString(name)) {
+            names = name.split(/\s+/g);
+        } else {
+            names = name;
+        }
+        names.forEach(function(klass) {
+            var re = classRE(klass);
+            if (!cls.match(re)) {
+                cls += (cls ? " " : "") + klass;
+            }
+        });
+
+        className(elm, cls);
+
+        return this;
+    }
+
+    function css(elm, property, value) {
+        if (arguments.length < 3) {
+            var computedStyle,
+                computedStyle = getComputedStyle(elm, '')
+            if (langx.isString(property)) {
+                return elm.style[camelCase(property)] || computedStyle.getPropertyValue(property)
+            } else if (langx.isArrayLike(property)) {
+                var props = {}
+                forEach.call(property, function(prop) {
+                    props[prop] = (elm.style[camelCase(prop)] || computedStyle.getPropertyValue(prop))
+                })
+                return props
+            }
+        }
+
+        var css = '';
+        if (typeof(property) == 'string') {
+            if (!value && value !== 0) {
+                elm.style.removeProperty(dasherize(property));
+            } else {
+                css = dasherize(property) + ":" + maybeAddPx(property, value)
+            }
+        } else {
+            for (key in property) {
+                if (property[key] === undefined) {
+                    continue;
+                }
+                if (!property[key] && property[key] !== 0) {
+                    elm.style.removeProperty(dasherize(key));
+                } else {
+                    css += dasherize(key) + ':' + maybeAddPx(key, property[key]) + ';'
+                }
+            }
+        }
+
+        elm.style.cssText += ';' + css;
+        return this;
+    }
+
+
+    function hasClass(elm, name) {
+        var re = classRE(name);
+        return elm.className && elm.className.match(re);
+    }
+
+    function removeClass(elm, name) {
+        var cls = className(elm),
+            names;
+        if (langx.isString(name)) {
+            names = name.split(/\s+/g);
+        } else {
+            names = name;
+        }
+
+        names.forEach(function(klass) {
+            var re = classRE(klass);
+            if (cls.match(re)) {
+                cls = cls.replace(re, " ");
+            }
+        });
+
+        className(elm, cls.trim());
+
+        return this;
+    }
+
+    function toggleClass(elm, name, when) {
+        var self = this;
+        name.split(/\s+/g).forEach(function(klass) {
+            if (when === undefined) {
+                when = !self.hasClass(elm, klass);
+            }
+            if (when) {
+                self.addClass(elm, klass);
+            } else {
+                self.removeClass(elm, klass)
+            }
+        });
+
+        return self;
+    }
+
+    var styler = function() {
+        return styler;
+    };
+
+    langx.mixin(styler, {
+        autocssfix: true,
+
+        addClass: addClass,
+        className: className,
+        css: css,
+        hasClass: hasClass,
+        hide: hide,
+        isInvisible: isInvisible,
+        removeClass: removeClass,
+        show: show,
+        toggleClass: toggleClass
+    });
+
+    return skylark.styler = styler;
+});
+
+define('skylark-utils/noder',[
+    "./skylark",
+    "./langx",
+    "./styler"
+], function(skylark, langx, styler) {
     var isIE = !!navigator.userAgent.match(/Trident/g) || !!navigator.userAgent.match(/MSIE/g),
         fragmentRE = /^\s*<(\w+|!)[^>]*>/,
         singleTagRE = /^<(\w+)\s*\/?>(?:<\/\1>|)$/,
@@ -1157,6 +1460,24 @@ define('skylark-utils/noder',[
         return this;
     }
 
+    function overlay(elm,params) {
+        var overlayDiv = createElement("div",params);
+        styler.css(overlayDiv, {
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            zIndex: 0x7FFFFFFF,
+            opacity: 0.7
+        });
+        elm.appendChild(overlayDiv);
+        return overlayDiv;
+
+    }
+    
+
+
     function remove(node) {
         if (node && node.parentNode) {
             node.parentNode.removeChild(node);
@@ -1170,43 +1491,49 @@ define('skylark-utils/noder',[
     }
 
     function throb(elm, params) {
+        params = params || {};
         var self = this,
             text = params.text,
             style = params.style,
             time = params.time,
             callback = params.callback,
             timer,
-            throbber = this.createElement("div", {
+            throbber = overlay(elm, {
                 className: params.className || "throbber",
                 style: style
             }),
             throb = this.createElement("div", {
                 className: "throb"
             }),
+            textNode = this.createTextNode(text || ""),
             remove = function() {
                 if (timer) {
                     clearTimeout(timer);
                     timer = null;
                 }
                 if (throbber) {
-                    self.unwrap(elm);
                     self.remove(throbber);
                     throbber = null;
                 }
+            },
+            update = function(params) {
+                if (params && params.text && throbber) {
+                    textNode.nodeValue = params.text;
+                }
             };
-        if (text) throb.appendChild(this.createTextNode(text));
+        throb.appendChild(textNode);
         throbber.appendChild(throb);
-        this.wrapper(elm, throbber);
-        var render = function() {
+        var end = function() {
+            remove();
             if (callback) callback();
         };
         if (time) {
-            timer = setTimeout(render, time);
-        } else {
-            render();
-        }
+            timer = setTimeout(end, time);
+        } 
+
         return {
-            remove: remove
+            remove: remove,
+            update: update
         };
     }
 
@@ -3011,314 +3338,6 @@ define('skylark-utils/eventer',[
     return skylark.eventer = eventer;
 });
 
-define('skylark-utils/styler',[
-    "./skylark",
-    "./langx"
-], function(skylark, langx) {
-    var every = Array.prototype.every,
-        forEach = Array.prototype.forEach,
-        camelCase = langx.camelCase,
-        dasherize = langx.dasherize;
-
-    function maybeAddPx(name, value) {
-        return (typeof value == "number" && !cssNumber[dasherize(name)]) ? value + "px" : value
-    }
-
-    var cssNumber = {
-            'column-count': 1,
-            'columns': 1,
-            'font-weight': 1,
-            'line-height': 1,
-            'opacity': 1,
-            'z-index': 1,
-            'zoom': 1
-        },
-        classReCache = {
-
-        };
-
-    function classRE(name) {
-        return name in classReCache ?
-            classReCache[name] : (classReCache[name] = new RegExp('(^|\\s)' + name + '(\\s|$)'));
-    }
-
-    // access className property while respecting SVGAnimatedString
-    function className(node, value) {
-        var klass = node.className || '',
-            svg = klass && klass.baseVal !== undefined
-
-        if (value === undefined) return svg ? klass.baseVal : klass
-        svg ? (klass.baseVal = value) : (node.className = value)
-    }
-
-
-    var elementDisplay = {};
-
-    function defaultDisplay(nodeName) {
-        var element, display
-        if (!elementDisplay[nodeName]) {
-            element = document.createElement(nodeName)
-            document.body.appendChild(element)
-            display = getComputedStyle(element, '').getPropertyValue("display")
-            element.parentNode.removeChild(element)
-            display == "none" && (display = "block")
-            elementDisplay[nodeName] = display
-        }
-        return elementDisplay[nodeName]
-    }
-
-    function show(elm) {
-        styler.css(elm, "display", "");
-        if (styler.css(elm, "display") == "none") {
-            styler.css(elm, "display", defaultDisplay(elm.nodeName));
-        }
-        return this;
-    }
-
-    function isInvisible(elm) {
-        return styler.css(elm, "display") == "none" || styler.css(elm, "opacity") == 0;
-    }
-
-    function hide(elm) {
-        styler.css(elm, "display", "none");
-        return this;
-    }
-
-    function addClass(elm, name) {
-        if (!name) return this
-        var cls = className(elm),
-            names;
-        if (langx.isString(name)) {
-            names = name.split(/\s+/g);
-        } else {
-            names = name;
-        }
-        names.forEach(function(klass) {
-            var re = classRE(klass);
-            if (!cls.match(re)) {
-                cls += (cls ? " " : "") + klass;
-            }
-        });
-
-        className(elm, cls);
-
-        return this;
-    }
-
-    function css(elm, property, value) {
-        if (arguments.length < 3) {
-            var computedStyle,
-                computedStyle = getComputedStyle(elm, '')
-            if (langx.isString(property)) {
-                return elm.style[camelCase(property)] || computedStyle.getPropertyValue(property)
-            } else if (langx.isArrayLike(property)) {
-                var props = {}
-                forEach.call(property, function(prop) {
-                    props[prop] = (elm.style[camelCase(prop)] || computedStyle.getPropertyValue(prop))
-                })
-                return props
-            }
-        }
-
-        var css = '';
-        if (typeof(property) == 'string') {
-            if (!value && value !== 0) {
-                elm.style.removeProperty(dasherize(property));
-            } else {
-                css = dasherize(property) + ":" + maybeAddPx(property, value)
-            }
-        } else {
-            for (key in property) {
-                if (property[key] === undefined) {
-                    continue;
-                }
-                if (!property[key] && property[key] !== 0) {
-                    elm.style.removeProperty(dasherize(key));
-                } else {
-                    css += dasherize(key) + ':' + maybeAddPx(key, property[key]) + ';'
-                }
-            }
-        }
-
-        elm.style.cssText += ';' + css;
-        return this;
-    }
-
-
-    function hasClass(elm, name) {
-        var re = classRE(name);
-        return elm.className && elm.className.match(re);
-    }
-
-    function removeClass(elm, name) {
-        var cls = className(elm),
-            names;
-        if (langx.isString(name)) {
-            names = name.split(/\s+/g);
-        } else {
-            names = name;
-        }
-
-        names.forEach(function(klass) {
-            var re = classRE(klass);
-            if (cls.match(re)) {
-                cls = cls.replace(re, " ");
-            }
-        });
-
-        className(elm, cls.trim());
-
-        return this;
-    }
-
-    function toggleClass(elm, name, when) {
-        var self = this;
-        name.split(/\s+/g).forEach(function(klass) {
-            if (when === undefined) {
-                when = !self.hasClass(elm, klass);
-            }
-            if (when) {
-                self.addClass(elm, klass);
-            } else {
-                self.removeClass(elm, klass)
-            }
-        });
-
-        return self;
-    }
-
-    var styler = function() {
-        return styler;
-    };
-
-    langx.mixin(styler, {
-        autocssfix: true,
-
-        addClass: addClass,
-        className: className,
-        css: css,
-        hasClass: hasClass,
-        hide: hide,
-        isInvisible: isInvisible,
-        removeClass: removeClass,
-        show: show,
-        toggleClass: toggleClass
-    });
-
-    return skylark.styler = styler;
-});
-
-define('skylark-utils/async',[
-    "./skylark",
-    "./langx"
-], function(skylark,langx) {
-
-    var Deferred = function() {
-        this.promise = new Promise(function(resolve, reject) {
-            this._resolve = resolve;
-            this._reject = reject;
-        }.bind(this));
-
-        this.resolve = Deferred.prototype.resolve.bind(this);
-        this.reject = Deferred.prototype.reject.bind(this);
-
-    };
-
-    Deferred.prototype.resolve = function(value) {
-        this._resolve.call(this.promise, value);
-        return this.promise;
-    };
-
-    Deferred.prototype.reject = function(reason) {
-        this._reject.call(this.promise, reason);
-        return this.promise;
-    };
-
-    Deferred.prototype.then = function(callback, errback, progback) {
-        return this.promise.then(callback, errback, progback);
-    };
-
-    Deferred.all = function(array) {
-        return Promise.all(array);
-    };
-
-    Deferred.first = function(array) {
-        return Promise.race(array);
-    };
-
-    Deferred.when = function(valueOrPromise, callback, errback, progback) {
-        var receivedPromise = valueOrPromise && typeof valueOrPromise.then === "function";
-        var nativePromise = receivedPromise && valueOrPromise instanceof Promise;
-
-        if (!receivedPromise) {
-            if (arguments.length > 1) {
-                return callback ? callback(valueOrPromise) : valueOrPromise;
-            } else {
-                return new Deferred().resolve(valueOrPromise);
-            }
-        } else if (!nativePromise) {
-            var deferred = new Deferred(valueOrPromise.cancel);
-            valueOrPromise.then(deferred.resolve, deferred.reject, deferred.progress);
-            valueOrPromise = deferred.promise;
-        }
-
-        if (callback || errback || progback) {
-            return valueOrPromise.then(callback, errback, progback);
-        }
-        return valueOrPromise;
-    };
-
-    Deferred.reject = function(err) {
-        var d = new Deferred();
-        d.reject(err);
-        return d.promise;
-    };
-
-    Deferred.resolve = function(data) {
-        var d = new Deferred();
-        d.resolve(data);
-        return d.promise;
-    };
-
-    Deferred.immediate = Deferred.resolve;
-
-    function debounce(fn, wait) {
-        var timeout,
-            args,
-            later = function() {
-                fn.apply(null, args);
-            };
-
-        return function() {
-            args = arguments;
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
-
-    function nextTick(fn) {
-        requestAnimationFrame(fn);
-        return this;
-    }
-
-    function async(fn) {
-        return async;
-    }
-
-    langx.mixin(async, {
-        all: Deferred.all,
-        debounce: debounce,
-        Deferred: Deferred,
-        first : Deferred.first,
-        nextTick : nextTick,
-        reject : Deferred.reject,
-        resolve : Deferred.resolve,
-        when: Deferred.when
-    });
-
-    return skylark.async = async;
-});
-
 define('skylark-utils/geom',[
     "./skylark",
     "./langx",
@@ -3777,9 +3796,8 @@ define('skylark-utils/fx',[
     "./langx",
     "./browser",
     "./styler",
-    "./eventer",
-    "./async"
-], function(skylark, langx, browser, styler, eventer, async) {
+    "./eventer"
+], function(skylark, langx, browser, styler, eventer) {
     var animationName,
         animationDuration,
         animationTiming,
@@ -3903,7 +3921,7 @@ define('skylark-utils/fx',[
             eventer.on(elm, endEvent, wrappedCallback);
             // transitionEnd is not always firing on older Android phones
             // so make sure it gets fired
-            async.debounce(function() {
+            langx.debounce(function() {
                 if (fired) {
                     return;
                 }
@@ -3917,7 +3935,7 @@ define('skylark-utils/fx',[
         styler.css(elm, cssValues);
 
         if (duration <= 0) {
-            async.debounce(function() {
+            langx.debounce(function() {
                 if (fired) {
                     return;
                 }
@@ -3978,7 +3996,7 @@ define('skylark-utils/fx',[
 
             if (i >= freq + 1) {
                 clearInterval(interval);
-                if (callback) async.debounce(callback, 1000)();
+                if (callback) langx.debounce(callback, 1000)();
             }
         }, runEvery);
     }
@@ -4063,7 +4081,6 @@ define('skylark-utils/fx',[
 define('skylark-utils/query',[
     "./skylark",
     "./langx",
-    "./async",
     "./noder",
     "./datax",
     "./eventer",
@@ -4071,7 +4088,7 @@ define('skylark-utils/query',[
     "./geom",
     "./styler",
     "./fx"
-], function(skylark, langx, async, noder, datax, eventer, finder, geom, styler, fx) {
+], function(skylark, langx, noder, datax, eventer, finder, geom, styler, fx) {
     var some = Array.prototype.some,
         push = Array.prototype.push,
         every = Array.prototype.every,

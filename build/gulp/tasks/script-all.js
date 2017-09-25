@@ -20,17 +20,20 @@ var requireConfig = {
     baseUrl: util.src,
     out : util.pkg.name + "-all.js",
     packages : [{
+       name : "skylark-langx" ,
+       location :  util.lib_langx+"uncompressed/skylark-langx"
+    },
+    {
        name : "skylark-utils" ,
-       location :  util.lib+"skylark-utils-v0.9.0/uncompressed/skylark-utils"
-   },
+       location :  util.lib_utils+"uncompressed/skylark-utils"
+    },
     {
        name : util.pkg.name ,
        location :  util.src,
        main : "core"
 
     }],
-    paths: {
-    },
+
 
     include: [
         util.pkg.name + "/ajax",

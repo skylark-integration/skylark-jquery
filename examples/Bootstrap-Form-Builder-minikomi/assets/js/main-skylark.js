@@ -14,7 +14,7 @@ require.config({
     }
   }
   , paths: {
-    jquery         : "http://registry.skylarkjs.org/packages/skylark-jquery/v0.9.0/uncompressed/skylark-jquery-all"
+    jquery         : "http://registry.skylarkjs.org/packages/skylark-jquery/v0.9.3/uncompressed/skylark-jquery-all"
     ,app         : ".."
     , collections : "../collections"
     , data        : "../data"
