@@ -37,8 +37,8 @@
     "gulp-usemin": "^0.3.11",
     "gulp-util": "^3.0.6",
     "run-sequence": "^2.1.0",
-    "skylark-langx": "^0.9.3",
-    "skylark-utils": "^0.9.3"
+    "skylark-langx": "^0.9.4",
+    "skylark-utils": "^0.9.4"
   },
   "engines": {
     "node": ">=0.8.0"
