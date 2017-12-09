@@ -1092,6 +1092,95 @@ define('skylark-utils/langx',[
     return langx;
 });
 
+define('skylark-utils/browser',[
+    "./skylark",
+    "./langx"
+], function(skylark,langx) {
+    var checkedCssProperties = {
+        "transitionproperty": "TransitionProperty",
+    };
+
+    var css3PropPrefix = "",
+        css3StylePrefix = "",
+        css3EventPrefix = "",
+
+        cssStyles = {},
+        cssProps = {},
+
+        vendorPrefix,
+        vendorPrefixRE,
+        vendorPrefixesRE = /^(Webkit|webkit|O|Moz|moz|ms)(.*)$/,
+
+        document = window.document,
+        testEl = document.createElement("div"),
+
+        matchesSelector = testEl.webkitMatchesSelector ||
+        testEl.mozMatchesSelector ||
+        testEl.oMatchesSelector ||
+        testEl.matchesSelector,
+
+        testStyle = testEl.style;
+
+    for (var name in testStyle) {
+        var matched = name.match(vendorPrefixRE || vendorPrefixesRE);
+        if (matched) {
+            if (!vendorPrefixRE) {
+                vendorPrefix = matched[1];
+                vendorPrefixRE = new RegExp("^(" + vendorPrefix + ")(.*)$");
+
+                css3StylePrefix = vendorPrefix;
+                css3PropPrefix = '-' + vendorPrefix.toLowerCase() + '-';
+                css3EventPrefix = vendorPrefix.toLowerCase();
+            }
+
+            cssStyles[langx.lowerFirst(matched[2])] = name;
+            var cssPropName = langx.dasherize(matched[2]);
+            cssProps[cssPropName] = css3PropPrefix + cssPropName;
+
+        }
+    }
+
+
+    function normalizeCssEvent(name) {
+        return css3EventPrefix ? css3EventPrefix + name : name.toLowerCase();
+    }
+
+    function normalizeCssProperty(name) {
+        return cssProps[name] || name;
+    }
+
+    function normalizeStyleProperty(name) {
+        return cssStyles[name] || name;
+    }
+
+    function browser() {
+        return browser;
+    }
+
+    langx.mixin(browser, {
+        css3PropPrefix: css3PropPrefix,
+
+        normalizeStyleProperty: normalizeStyleProperty,
+
+        normalizeCssProperty: normalizeCssProperty,
+
+        normalizeCssEvent: normalizeCssEvent,
+
+        matchesSelector: matchesSelector,
+
+        location: function() {
+            return window.location;
+        },
+
+        support : {}
+
+    });
+
+    testEl = null;
+
+    return skylark.browser = browser;
+});
+
 define('skylark-utils/styler',[
     "./skylark",
     "./langx"
@@ -1396,6 +1485,7 @@ define('skylark-utils/noder',[
 
     function createFragment(html) {
         // A special case optimization for a single tag
+        html = langx.trim(html);
         if (singleTagRE.test(html)) {
             return [createElement(RegExp.$1)];
         }
@@ -1706,95 +1796,6 @@ define('skylark-utils/noder',[
     return skylark.noder = noder;
 });
 
-define('skylark-utils/browser',[
-    "./skylark",
-    "./langx"
-], function(skylark,langx) {
-    var checkedCssProperties = {
-        "transitionproperty": "TransitionProperty",
-    };
-
-    var css3PropPrefix = "",
-        css3StylePrefix = "",
-        css3EventPrefix = "",
-
-        cssStyles = {},
-        cssProps = {},
-
-        vendorPrefix,
-        vendorPrefixRE,
-        vendorPrefixesRE = /^(Webkit|webkit|O|Moz|moz|ms)(.*)$/,
-
-        document = window.document,
-        testEl = document.createElement("div"),
-
-        matchesSelector = testEl.webkitMatchesSelector ||
-        testEl.mozMatchesSelector ||
-        testEl.oMatchesSelector ||
-        testEl.matchesSelector,
-
-        testStyle = testEl.style;
-
-    for (var name in testStyle) {
-        var matched = name.match(vendorPrefixRE || vendorPrefixesRE);
-        if (matched) {
-            if (!vendorPrefixRE) {
-                vendorPrefix = matched[1];
-                vendorPrefixRE = new RegExp("^(" + vendorPrefix + ")(.*)$");
-
-                css3StylePrefix = vendorPrefix;
-                css3PropPrefix = '-' + vendorPrefix.toLowerCase() + '-';
-                css3EventPrefix = vendorPrefix.toLowerCase();
-            }
-
-            cssStyles[langx.lowerFirst(matched[2])] = name;
-            var cssPropName = langx.dasherize(matched[2]);
-            cssProps[cssPropName] = css3PropPrefix + cssPropName;
-
-        }
-    }
-
-
-    function normalizeCssEvent(name) {
-        return css3EventPrefix ? css3EventPrefix + name : name.toLowerCase();
-    }
-
-    function normalizeCssProperty(name) {
-        return cssProps[name] || name;
-    }
-
-    function normalizeStyleProperty(name) {
-        return cssStyles[name] || name;
-    }
-
-    function browser() {
-        return browser;
-    }
-
-    langx.mixin(browser, {
-        css3PropPrefix: css3PropPrefix,
-
-        normalizeStyleProperty: normalizeStyleProperty,
-
-        normalizeCssProperty: normalizeCssProperty,
-
-        normalizeCssEvent: normalizeCssEvent,
-
-        matchesSelector: matchesSelector,
-
-        location: function() {
-            return window.location;
-        },
-
-        support : {}
-
-    });
-
-    testEl = null;
-
-    return skylark.browser = browser;
-});
-
 define('skylark-utils/finder',[
     "./skylark",
     "./langx",
@@ -2045,6 +2046,9 @@ define('skylark-utils/finder',[
 
     local.pseudos = {
         // custom pseudos
+        'checkbox': function(elm){
+            return elm.type === "checkbox";
+        },
         checked: function(elm) {
             return !!elm.checked;
         },
@@ -2061,7 +2065,7 @@ define('skylark-utils/finder',[
             return !elm.disabled;
         },
 
-        eq: function(elm, idx, nodes, value) {
+        'eq': function(elm, idx, nodes, value) {
             return (idx == value);
         },
 
@@ -2069,44 +2073,48 @@ define('skylark-utils/finder',[
             return document.activeElement === elm && (elm.href || elm.type || elm.tabindex);
         },
 
-        first: function(elm, idx) {
+        'first': function(elm, idx) {
             return (idx === 0);
         },
 
-        gt: function(elm, idx, nodes, value) {
+        'gt': function(elm, idx, nodes, value) {
             return (idx > value);
         },
 
-        has: function(elm, idx, nodes, sel) {
+        'has': function(elm, idx, nodes, sel) {
             return local.querySelector(elm, sel).length > 0;
         },
 
 
-        hidden: function(elm) {
+        'hidden': function(elm) {
             return !local.pseudos["visible"](elm);
         },
 
-        last: function(elm, idx, nodes) {
+        'last': function(elm, idx, nodes) {
             return (idx === nodes.length - 1);
         },
 
-        lt: function(elm, idx, nodes, value) {
+        'lt': function(elm, idx, nodes, value) {
             return (idx < value);
         },
 
-        not: function(elm, idx, nodes, sel) {
+        'not': function(elm, idx, nodes, sel) {
             return local.match(elm, sel);
         },
 
-        parent: function(elm) {
+        'parent': function(elm) {
             return !!elm.parentNode;
         },
 
-        selected: function(elm) {
+        'radio': function(elm){
+            return elm.type === "radio";
+        },
+
+        'selected': function(elm) {
             return !!elm.selected;
         },
 
-        visible: function(elm) {
+        'visible': function(elm) {
             return elm.offsetWidth && elm.offsetWidth
         }
     };
@@ -2803,6 +2811,13 @@ define('skylark-utils/datax',[
         return this;
     }
 
+    function removeProp(elm, name) {
+        name.split(' ').forEach(function(prop) {
+            delete elm[prop];
+        });
+        return this;
+    }
+
     function text(elm, txt) {
         if (txt === undefined) {
             return elm.textContent;
@@ -2845,6 +2860,8 @@ define('skylark-utils/datax',[
         removeAttr: removeAttr,
 
         removeData: removeData,
+
+        removeProp: removeProp,
 
         text: text,
 
@@ -4495,7 +4512,7 @@ define('skylark-utils/query',[
             },
 
             add: function(selector, context) {
-                return $(uniq(this.concat($(selector, context))))
+                return $(uniq(this.toArray().concat($(selector, context).toArray())));
             },
 
             is: function(selector) {
@@ -4661,6 +4678,8 @@ define('skylark-utils/query',[
             removeAttr: wrapper_every_act(datax.removeAttr, datax),
 
             prop: wrapper_name_value(datax.prop, datax, datax.prop),
+
+            removeProp: wrapper_every_act(datax.removeProp, datax),
 
             data: wrapper_name_value(datax.data, datax, datax.data),
 
@@ -4963,6 +4982,7 @@ define('skylark-utils/query',[
 });
 define('skylark-jquery/core',[
 	"skylark-utils/skylark",
+	"skylark-utils/browser",
 	"skylark-utils/langx",
 	"skylark-utils/noder",
 	"skylark-utils/datax",
@@ -4970,7 +4990,7 @@ define('skylark-jquery/core',[
 	"skylark-utils/finder",
 	"skylark-utils/styler",
 	"skylark-utils/query"
-],function(skylark,langx,noder,datax,eventer,finder,styler,query){
+],function(skylark,browser,langx,noder,datax,eventer,finder,styler,query){
 	var filter = Array.prototype.filter,
 		slice = Array.prototype.slice;
 
@@ -5062,6 +5082,8 @@ define('skylark-jquery/core',[
 
         $.event = {};
 
+	    $.event.special = eventer.special;
+
 	    $.fn.submit = function(callback) {
 	        if (0 in arguments) this.bind('submit', callback)
 	        else if (this.length) {
@@ -5133,7 +5155,7 @@ define('skylark-jquery/core',[
     (function($){
 	    // plugin compatibility
 	    $.uuid = 0;
-	    $.support = {};
+	    $.support = browser.support;
 	    $.expr = {};
 
 	    $.expr[":"] = $.expr.pseudos = $.expr.filters = finder.pseudos;
@@ -5188,64 +5210,6 @@ define('skylark-jquery/core',[
 	        } else {
 	            curElem.css(props);
 	        }
-	    };
-    })(query);
-
-    (function($){
-	    /**
-	     * @license Copyright 2013 Enideo. Released under dual MIT and GPL licenses.
-	     * https://github.com/Enideo/zepto-events-special
-	     */
-
-	    $.event.special = $.event.special || {};
-
-	    var bindBeforeSpecialEvents = $.fn.on;
-
-	    //       $.fn.on = function (eventName, data, callback) {
-	    $.fn.on = function(eventName, selector, data, callback, one) {
-	        if (typeof eventName === "object") return bindBeforeSpecialEvents.apply(this, [eventName, selector, data, callback, one]);
-	        var el = this,
-	            $this = $(el),
-	            specialEvent,
-	            bindEventName = eventName;
-
-	        if (callback == null) {
-	            callback = data;
-	            data = null;
-	        }
-
-	        $.each(eventName.split(/\s/), function(i, eventName) {
-	            eventName = eventName.split(/\./)[0];
-	            if ((eventName in $.event.special)) {
-	                specialEvent = $.event.special[eventName];
-	                bindEventName = specialEvent.bindType || bindEventName;
-	                /// init enable special events on Zepto
-	                if (!specialEvent._init) {
-	                    specialEvent._init = true;
-	                    /// intercept and replace the special event handler to add functionality
-	                    specialEvent.originalHandler = specialEvent.handler || specialEvent.handle;
-	                    specialEvent.handler = function() {
-	                        /// make event argument writeable, like on jQuery
-	                        var args = Array.prototype.slice.call(arguments);
-	                        args[0] = $.extend({}, args[0]);
-	                        /// define the event handle, $.event.dispatch is only for newer versions of jQuery
-	                        $.event.handle = function() {
-	                            /// make context of trigger the event element
-	                            var args = Array.prototype.slice.call(arguments),
-	                                event = args[0],
-	                                $target = $(event.target);
-	                            $target.trigger.apply($target, arguments);
-	                        }
-	                        specialEvent.originalHandler.apply(this, args);
-	                    }
-	                }
-	                /// setup special events on Zepto
-	                specialEvent.setup && specialEvent.setup.apply(el, [data]);
-	            }
-	        });
-
-	        return bindBeforeSpecialEvents.apply(this, [bindEventName, selector, data, callback, one]);
-
 	    };
     })(query);
 

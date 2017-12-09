@@ -1,5 +1,6 @@
 define([
 	"skylark-utils/skylark",
+	"skylark-utils/browser",
 	"skylark-utils/langx",
 	"skylark-utils/noder",
 	"skylark-utils/datax",
@@ -7,7 +8,7 @@ define([
 	"skylark-utils/finder",
 	"skylark-utils/styler",
 	"skylark-utils/query"
-],function(skylark,langx,noder,datax,eventer,finder,styler,query){
+],function(skylark,browser,langx,noder,datax,eventer,finder,styler,query){
 	var filter = Array.prototype.filter,
 		slice = Array.prototype.slice;
 
@@ -99,6 +100,8 @@ define([
 
         $.event = {};
 
+	    $.event.special = eventer.special;
+
 	    $.fn.submit = function(callback) {
 	        if (0 in arguments) this.bind('submit', callback)
 	        else if (this.length) {
@@ -170,7 +173,7 @@ define([
     (function($){
 	    // plugin compatibility
 	    $.uuid = 0;
-	    $.support = {};
+	    $.support = browser.support;
 	    $.expr = {};
 
 	    $.expr[":"] = $.expr.pseudos = $.expr.filters = finder.pseudos;
@@ -225,64 +228,6 @@ define([
 	        } else {
 	            curElem.css(props);
 	        }
-	    };
-    })(query);
-
-    (function($){
-	    /**
-	     * @license Copyright 2013 Enideo. Released under dual MIT and GPL licenses.
-	     * https://github.com/Enideo/zepto-events-special
-	     */
-
-	    $.event.special = $.event.special || {};
-
-	    var bindBeforeSpecialEvents = $.fn.on;
-
-	    //       $.fn.on = function (eventName, data, callback) {
-	    $.fn.on = function(eventName, selector, data, callback, one) {
-	        if (typeof eventName === "object") return bindBeforeSpecialEvents.apply(this, [eventName, selector, data, callback, one]);
-	        var el = this,
-	            $this = $(el),
-	            specialEvent,
-	            bindEventName = eventName;
-
-	        if (callback == null) {
-	            callback = data;
-	            data = null;
-	        }
-
-	        $.each(eventName.split(/\s/), function(i, eventName) {
-	            eventName = eventName.split(/\./)[0];
-	            if ((eventName in $.event.special)) {
-	                specialEvent = $.event.special[eventName];
-	                bindEventName = specialEvent.bindType || bindEventName;
-	                /// init enable special events on Zepto
-	                if (!specialEvent._init) {
-	                    specialEvent._init = true;
-	                    /// intercept and replace the special event handler to add functionality
-	                    specialEvent.originalHandler = specialEvent.handler || specialEvent.handle;
-	                    specialEvent.handler = function() {
-	                        /// make event argument writeable, like on jQuery
-	                        var args = Array.prototype.slice.call(arguments);
-	                        args[0] = $.extend({}, args[0]);
-	                        /// define the event handle, $.event.dispatch is only for newer versions of jQuery
-	                        $.event.handle = function() {
-	                            /// make context of trigger the event element
-	                            var args = Array.prototype.slice.call(arguments),
-	                                event = args[0],
-	                                $target = $(event.target);
-	                            $target.trigger.apply($target, arguments);
-	                        }
-	                        specialEvent.originalHandler.apply(this, args);
-	                    }
-	                }
-	                /// setup special events on Zepto
-	                specialEvent.setup && specialEvent.setup.apply(el, [data]);
-	            }
-	        });
-
-	        return bindBeforeSpecialEvents.apply(this, [bindEventName, selector, data, callback, one]);
-
 	    };
     })(query);
 
