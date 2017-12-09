@@ -1,7 +1,7 @@
 /**
  * skylark-jquery - The skylark plugin library for fully compatible API with jquery.
  * @author Hudaokeji Co.,Ltd
- * @version v0.9.5
+ * @version v0.9.6-beta
  * @link www.skylarkjs.org
  * @license MIT
  */

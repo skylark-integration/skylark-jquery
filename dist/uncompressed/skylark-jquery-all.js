@@ -1,7 +1,7 @@
 /**
  * skylark-jquery - The skylark plugin library for fully compatible API with jquery.
  * @author Hudaokeji Co.,Ltd
- * @version v0.9.5
+ * @version v0.9.6-beta
  * @link www.skylarkjs.org
  * @license MIT
  */
@@ -2049,11 +2049,11 @@ define('skylark-utils/finder',[
         'checkbox': function(elm){
             return elm.type === "checkbox";
         },
-        checked: function(elm) {
+        'checked': function(elm) {
             return !!elm.checked;
         },
 
-        contains: function(elm, idx, nodes, text) {
+        'contains': function(elm, idx, nodes, text) {
             if ($(this).text().indexOf(text) > -1) return this
         },
 
@@ -2119,6 +2119,10 @@ define('skylark-utils/finder',[
         }
     };
 
+    ["first","eq","last"].forEach(function(item){
+        local.pseudos[item].isArrayFilter = true;
+    });
+
     local.divide = function(cond) {
         var nativeSelector = "",
             customPseudos = [],
@@ -2174,51 +2178,59 @@ define('skylark-utils/finder',[
 
     };
 
-    local.check = function(node, cond, idx, nodes) {
+    local.check = function(node, cond, idx, nodes,arrayFilte) {
         var tag,
             id,
             classes,
             attributes,
-            pseudos;
+            pseudos,
 
-        if (tag = cond.tag) {
-            var nodeName = node.nodeName.toUpperCase();
-            if (tag == '*') {
-                if (nodeName < '@') return false; // Fix for comment nodes and closed nodes
-            } else {
-                if (nodeName != (tag || "").toUpperCase()) return false;
+            i, part, cls, pseudo;
+
+        if (!arrayFilte) {
+            if (tag = cond.tag) {
+                var nodeName = node.nodeName.toUpperCase();
+                if (tag == '*') {
+                    if (nodeName < '@') return false; // Fix for comment nodes and closed nodes
+                } else {
+                    if (nodeName != (tag || "").toUpperCase()) return false;
+                }
             }
+
+            if (id = cond.id) {
+                if (node.getAttribute('id') != id) {
+                    return false;
+                }
+            }
+
+
+            if (classes = cond.classes) {
+                for (i = classes.length; i--;) {
+                    cls = node.getAttribute('class');
+                    if (!(cls && classes[i].regexp.test(cls))) return false;
+                }
+            }
+
+            if (attributes) {
+                for (i = attributes.length; i--;) {
+                    part = attributes[i];
+                    if (part.operator ? !part.test(node.getAttribute(part.key)) : !node.hasAttribute(part.key)) return false;
+                }
+
+            }
+
         }
-
-        if (id = cond.id) {
-            if (node.getAttribute('id') != id) {
-                return false;
-            }
-        }
-
-        var i, part, cls, pseudo;
-
-        if (classes = cond.classes) {
-            for (i = classes.length; i--;) {
-                cls = node.getAttribute('class');
-                if (!(cls && classes[i].regexp.test(cls))) return false;
-            }
-        }
-
-        if (attributes)
-            for (i = attributes.length; i--;) {
-                part = attributes[i];
-                if (part.operator ? !part.test(node.getAttribute(part.key)) : !node.hasAttribute(part.key)) return false;
-            }
         if (pseudos = cond.pseudos) {
             for (i = pseudos.length; i--;) {
                 part = pseudos[i];
                 if (pseudo = this.pseudos[part.key]) {
-                    if (!pseudo(node, idx, nodes, part.value)) {
-                        return false;
+                    if ((arrayFilte && pseudo.isArrayFilter) || (!arrayFilte && !pseudo.isArrayFilter)) {
+                        if (!pseudo(node, idx, nodes, part.value)) {
+                            return false;
+                        }
                     }
                 } else {
-                    if (!nativeMatchesSelector.call(node, part.key)) {
+                    if (!arrayFilte && !nativeMatchesSelector.call(node, part.key)) {
                         return false;
                     }
                 }
@@ -2229,7 +2241,14 @@ define('skylark-utils/finder',[
 
     local.match = function(node, selector) {
 
-        var parsed = local.Slick.parse(selector);
+        var parsed ;
+
+        if (langx.isString(selector)) {
+            parsed = local.Slick.parse(selector);
+        } else {
+            parsed = selector;            
+        }
+        
         if (!parsed) {
             return true;
         }
@@ -2237,12 +2256,13 @@ define('skylark-utils/finder',[
         // simple (single) selectors
         var expressions = parsed.expressions,
             simpleExpCounter = 0,
-            i;
+            i,
+            currentExpression;
         for (i = 0;
             (currentExpression = expressions[i]); i++) {
             if (currentExpression.length == 1) {
                 var exp = currentExpression[0];
-                if (this.check(node, exp)) {
+                if (this.check(node,exp)) {
                     return true;
                 }
                 simpleExpCounter++;
@@ -2262,6 +2282,39 @@ define('skylark-utils/finder',[
         }
         return false;
     };
+
+
+    local.filter = function(nodes, selector) {
+        var parsed = local.Slick.parse(selector);
+
+
+        // simple (single) selectors
+        var expressions = parsed.expressions,
+            i,
+            currentExpression,
+            ret = [];
+        for (i = 0;
+            (currentExpression = expressions[i]); i++) {
+            if (currentExpression.length == 1) {
+                var exp = currentExpression[0];
+
+                var matchs = filter.call(nodes, function(node, idx) {
+                    return local.check(node, exp, idx, nodes,false);
+                });    
+
+                matchs = filter.call(matchs, function(node, idx) {
+                    return local.check(node, exp, idx, matchs,true);
+                });    
+
+                ret = langx.uniq(ret.concat(matchs));
+            } else {
+                throw new Error("not supported selector:" + selector);
+            }
+        }
+
+        return ret;
+ 
+    };    
 
     local.combine = function(elm, bit) {
         var op = bit.combinator,
@@ -2330,8 +2383,14 @@ define('skylark-utils/finder',[
                         nodes = filter.call(nodes, function(item, idx) {
                             return local.check(item, {
                                 pseudos: [divided.customPseudos[i]]
-                            }, idx, nodes)
+                            }, idx, nodes,false)
                         });
+
+                        nodes = filter.call(nodes, function(item, idx) {
+                            return local.check(item, {
+                                pseudos: [divided.customPseudos[i]]
+                            }, idx, nodes,true)
+                        });                        
                     }
                 }
                 break;
@@ -2395,9 +2454,7 @@ define('skylark-utils/finder',[
         var ret = [],
             rootIsSelector = root && langx.isString(root);
         while (node = node.parentNode) {
-            if (matches(node, selector)) {
                 ret.push(node);
-            }
             if (root) {
                 if (rootIsSelector) {
                     if (matches(node,root)) {
@@ -2408,6 +2465,10 @@ define('skylark-utils/finder',[
                 }
             } 
 
+        }
+
+        if (selector) {
+            ret = local.filter(ret,selector);
         }
         return ret;
     }
@@ -2423,11 +2484,11 @@ define('skylark-utils/finder',[
         for (var i = 0; i < childNodes.length; i++) {
             var node = childNodes[i];
             if (node.nodeType == 1) {
-                if (!selector || matches(node, selector)) {
-                    ret.push(node);
-                }
-
+                ret.push(node);
             }
+        }
+        if (selector) {
+            ret = local.filter(ret,selector);
         }
         return ret;
     }
