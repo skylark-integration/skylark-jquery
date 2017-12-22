@@ -104,6 +104,121 @@ define('skylark-langx/langx',["./skylark"], function(skylark) {
         filter = Array.prototype.filter;
 
 
+    var undefined, nextId = 0;
+    function advise(dispatcher, type, advice, receiveArguments){
+        var previous = dispatcher[type];
+        var around = type == "around";
+        var signal;
+        if(around){
+            var advised = advice(function(){
+                return previous.advice(this, arguments);
+            });
+            signal = {
+                remove: function(){
+                    if(advised){
+                        advised = dispatcher = advice = null;
+                    }
+                },
+                advice: function(target, args){
+                    return advised ?
+                        advised.apply(target, args) :  // called the advised function
+                        previous.advice(target, args); // cancelled, skip to next one
+                }
+            };
+        }else{
+            // create the remove handler
+            signal = {
+                remove: function(){
+                    if(signal.advice){
+                        var previous = signal.previous;
+                        var next = signal.next;
+                        if(!next && !previous){
+                            delete dispatcher[type];
+                        }else{
+                            if(previous){
+                                previous.next = next;
+                            }else{
+                                dispatcher[type] = next;
+                            }
+                            if(next){
+                                next.previous = previous;
+                            }
+                        }
+
+                        // remove the advice to signal that this signal has been removed
+                        dispatcher = advice = signal.advice = null;
+                    }
+                },
+                id: nextId++,
+                advice: advice,
+                receiveArguments: receiveArguments
+            };
+        }
+        if(previous && !around){
+            if(type == "after"){
+                // add the listener to the end of the list
+                // note that we had to change this loop a little bit to workaround a bizarre IE10 JIT bug
+                while(previous.next && (previous = previous.next)){}
+                previous.next = signal;
+                signal.previous = previous;
+            }else if(type == "before"){
+                // add to beginning
+                dispatcher[type] = signal;
+                signal.next = previous;
+                previous.previous = signal;
+            }
+        }else{
+            // around or first one just replaces
+            dispatcher[type] = signal;
+        }
+        return signal;
+    }
+    function aspect(type){
+        return function(target, methodName, advice, receiveArguments){
+            var existing = target[methodName], dispatcher;
+            if(!existing || existing.target != target){
+                // no dispatcher in place
+                target[methodName] = dispatcher = function(){
+                    var executionId = nextId;
+                    // before advice
+                    var args = arguments;
+                    var before = dispatcher.before;
+                    while(before){
+                        args = before.advice.apply(this, args) || args;
+                        before = before.next;
+                    }
+                    // around advice
+                    if(dispatcher.around){
+                        var results = dispatcher.around.advice(this, args);
+                    }
+                    // after advice
+                    var after = dispatcher.after;
+                    while(after && after.id < executionId){
+                        if(after.receiveArguments){
+                            var newResults = after.advice.apply(this, args);
+                            // change the return value only if a new value was returned
+                            results = newResults === undefined ? results : newResults;
+                        }else{
+                            results = after.advice.call(this, results, args);
+                        }
+                        after = after.next;
+                    }
+                    return results;
+                };
+                if(existing){
+                    dispatcher.around = {advice: function(target, args){
+                        return existing.apply(target, args);
+                    }};
+                }
+                dispatcher.target = target;
+            }
+            var results = advise((dispatcher || existing), type, advice, receiveArguments);
+            advice = null;
+            return results;
+        };
+    }
+
+
     var createClass = (function() {
         function extendClass(ctor, props, options) {
             // Copy the properties to the prototype of the class.
@@ -691,7 +806,7 @@ define('skylark-langx/langx',["./skylark"], function(skylark) {
     }
 
     function isArrayLike(obj) {
-        return !isString(obj) && !(obj.nodeName && obj.nodeName == "#text") && typeof obj.length == 'number';
+        return !isString(obj) && !isHtmlNode(obj) && typeof obj.length == 'number';
     }
 
     function isBoolean(obj) {
@@ -968,6 +1083,12 @@ define('skylark-langx/langx',["./skylark"], function(skylark) {
     }
 
     mixin(langx, {
+        after: aspect("after"),
+
+        around: aspect("around"),
+
+        before: aspect("before"),
+
         camelCase: function(str) {
             return str.replace(/-([\da-z])/g, function(a) {
                 return a.toUpperCase().replace('-', '');
@@ -1474,10 +1595,13 @@ define('skylark-utils/noder',[
         }
     }
 
-    function createElement(tag, props) {
+    function createElement(tag, props,parent) {
         var node = document.createElement(tag);
         if (props) {
             langx.mixin(node, props);
+        }
+        if (parent) {
+            append(parent,node);
         }
         return node;
     }
@@ -1524,7 +1648,10 @@ define('skylark-utils/noder',[
         return this;
     }
 
-    function isChildOf(node, parent) {
+    function isChildOf(node, parent,directly) {
+        if (directly) {
+            return node.parentNode === parent;
+        }
         if (document.documentElement.contains) {
             return parent.contains(node);
         }
@@ -2283,9 +2410,25 @@ define('skylark-utils/finder',[
     };
 
 
-    local.filter = function(nodes, selector) {
-        var parsed = local.Slick.parse(selector);
+    local.filterSingle = function(nodes, exp){
+        var matchs = filter.call(nodes, function(node, idx) {
+            return local.check(node, exp, idx, nodes,false);
+        });    
 
+        matchs = filter.call(matchs, function(node, idx) {
+            return local.check(node, exp, idx, matchs,true);
+        }); 
+        return matchs;
+    };
+
+    local.filter = function(nodes, selector) {
+        var parsed;
+
+        if (langx.isString(selector)) {
+            parsed = local.Slick.parse(selector);
+        } else {
+            return local.filterSingle(nodes,selector);           
+        }
 
         // simple (single) selectors
         var expressions = parsed.expressions,
@@ -2297,13 +2440,7 @@ define('skylark-utils/finder',[
             if (currentExpression.length == 1) {
                 var exp = currentExpression[0];
 
-                var matchs = filter.call(nodes, function(node, idx) {
-                    return local.check(node, exp, idx, nodes,false);
-                });    
-
-                matchs = filter.call(matchs, function(node, idx) {
-                    return local.check(node, exp, idx, matchs,true);
-                });    
+                var matchs = local.filterSingle(nodes,exp);  
 
                 ret = langx.uniq(ret.concat(matchs));
             } else {
@@ -2525,12 +2662,24 @@ define('skylark-utils/finder',[
         }
     }
 
-    function find(selector) {
-        return descendant(document.body, selector);
+    function find(elm,selector) {
+        if (!selector) {
+            selector = elm;
+            elm = document.body;
+        }
+        if (matches(elm,selector)) {
+            return elm;
+        } else {
+            return descendant(elm, selector);
+        }
     }
 
-    function findAll(selector) {
-        return descendants(document.body, selector);
+    function findAll(elm,selector) {
+        if (!selector) {
+            selector = elm;
+            elm = document.body;
+        }
+        return descendants(elm, selector);
     }
 
     function firstChild(elm, selector, first) {
