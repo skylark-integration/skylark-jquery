@@ -64,16 +64,7 @@
 
   factory(define,require);
 
-  if (isAmd) {
-    define([
-      "skylark-jquery/core",
-      "skylark-jquery/callbacks",
-      "skylark-jquery/deferred",
-      "skylark-jquery/ajax"
-    ],function($){
-      return $;
-    });
-  } else {    
+  if (!isAmd) {
     var jQuery =  require("skylark-jquery/core");
 
     if (isCmd) {
