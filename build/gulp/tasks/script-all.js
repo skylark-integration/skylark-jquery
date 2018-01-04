@@ -29,17 +29,12 @@ var requireConfig = {
     },
     {
        name : util.pkg.name ,
-       location :  util.src,
-       main : "core"
-
+       location :  util.src
     }],
 
 
     include: [
-        util.pkg.name + "/ajax",
-        util.pkg.name + "/callbacks",
-        util.pkg.name + "/core",
-        util.pkg.name + "/deferred"
+        util.pkg.name + "/main"
     ],
     exclude: [
     ]

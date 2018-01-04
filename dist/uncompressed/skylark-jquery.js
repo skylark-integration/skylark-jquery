@@ -65,7 +65,7 @@
   factory(define,require);
 
   if (!isAmd) {
-    var jQuery =  require("skylark-jquery/core");
+    var jQuery =  require("skylark-jquery/main");
 
     if (isCmd) {
       exports = jQuery;
@@ -313,8 +313,6 @@ define('skylark-jquery/core',[
 
     return window.jQuery = window.$ = query;
 });
-
-define('skylark-jquery', ['skylark-jquery/core'], function (main) { return main; });
 
 define('skylark-jquery/deferred',[
     "./core"
@@ -1072,6 +1070,17 @@ define('skylark-jquery/callbacks',[
     return $;
 
 });
+
+define('skylark-jquery/main',[
+    "./core",
+    "./ajax",
+    "./callbacks",
+    "./deferred"
+], function($) {
+    return $;
+});
+
+define('skylark-jquery', ['skylark-jquery/main'], function (main) { return main; });
 
 
 },this);

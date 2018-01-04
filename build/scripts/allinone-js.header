@@ -58,7 +58,7 @@
   factory(define,require);
 
   if (!isAmd) {
-    var jQuery =  require("skylark-jquery/core");
+    var jQuery =  require("skylark-jquery/main");
 
     if (isCmd) {
       exports = jQuery;
