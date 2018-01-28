@@ -178,6 +178,10 @@ define([
 
 	    $.expr[":"] = $.expr.pseudos = $.expr.filters = finder.pseudos;
 
+	    $.expr.createPseudo = function(fn) {
+	    	return fn;
+	    };
+
 	    $.contains = noder.contains;
 
 	    $.css = styler.css;
@@ -230,6 +234,11 @@ define([
 	        }
 	    };
     })(query);
+
+    query.parseHTML = function(html) {
+        return  noder.createFragment(html);
+    };
+
 
     query.skylark = skylark;
 
