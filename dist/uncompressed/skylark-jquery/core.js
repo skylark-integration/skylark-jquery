@@ -13,9 +13,10 @@ define([
 	"skylark-utils/datax",
 	"skylark-utils/eventer",
 	"skylark-utils/finder",
+	"skylark-utils/fx",
 	"skylark-utils/styler",
 	"skylark-utils/query"
-],function(skylark,browser,langx,noder,datax,eventer,finder,styler,query){
+],function(skylark,browser,langx,noder,datax,eventer,finder,fx,styler,query){
 	var filter = Array.prototype.filter,
 		slice = Array.prototype.slice;
 
@@ -189,11 +190,20 @@ define([
 	    	return fn;
 	    };
 
+	    $.cssHooks = styler.cssHooks;
+
 	    $.contains = noder.contains;
 
 	    $.css = styler.css;
 
 	    $.data = datax.data;
+
+	    $.fx = fx;
+	    $.fx.step = {
+
+        };
+
+        $.easing = {};
 
 	    $.offset = {};
 	    $.offset.setOffset = function(elem, options, i) {

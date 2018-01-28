@@ -1479,7 +1479,10 @@ define('skylark-utils/styler',[
 
     langx.mixin(styler, {
         autocssfix: true,
+        cssHooks : {
 
+        },
+        
         addClass: addClass,
         className: className,
         css: css,
@@ -3226,8 +3229,8 @@ define('skylark-utils/eventer',[
             if (langx.isString(type)) {
                 props = props || {};
             } else {
-                props = type;
-                type = props.type;
+                props = type || {};
+                type = props.type || "";
             }
             var parsed = parse(type);
             type = parsed.type;
@@ -4452,7 +4455,7 @@ define('skylark-utils/fx',[
             duration : duration,
             complete: function(){
                 if (callback) {
-                    callback.apply(target); 
+                    callback.apply(elm); 
                 }
             }    
         }
@@ -4464,18 +4467,16 @@ define('skylark-utils/fx',[
     function slideUp(elm,duration,callback) {
         // active the function only if the element is visible
         if (geom.height(elm) > 0) {
-        
-            var target = elm;
-            
+                   
             // get the element position to restore it then
-            var position = styler.css(target,'position');
+            var position = styler.css(elm,'position');
             
             // get the element height, margin and padding to restore them then
-            var height = styler.css(target,'height');
-            var marginTop = styler.css(target,'margin-top');
-            var marginBottom = styler.css(target,'margin-bottom');
-            var paddingTop = styler.css(target,'padding-top');
-            var paddingBottom = styler.css(target,'padding-bottom');
+            var height = styler.css(elm,'height');
+            var marginTop = styler.css(elm,'margin-top');
+            var marginBottom = styler.css(elm,'margin-bottom');
+            var paddingTop = styler.css(elm,'padding-top');
+            var paddingBottom = styler.css(elm,'padding-bottom');
             
             // set initial css for animation
             styler.css(elm,{
@@ -4489,7 +4490,7 @@ define('skylark-utils/fx',[
             });
             
             // animate element height, margin and padding to zero
-            animate(target,{
+            animate(elm,{
                 height: 0,
                 marginTop: 0,
                 marginBottom: 0,
@@ -4500,8 +4501,8 @@ define('skylark-utils/fx',[
                 duration: duration,
                 queue: false,
                 complete: function(){
-                    hide(target);
-                    styler.css(target,{
+                    hide(elm);
+                    styler.css(elm,{
                         visibility: 'visible',
                         overflow: 'hidden',
                         height: height,
@@ -4511,7 +4512,7 @@ define('skylark-utils/fx',[
                         paddingBottom: paddingBottom
                     });
                     if (callback) {
-                        callback.apply(target); 
+                        callback.apply(elm); 
                     }
                 }
             });
@@ -5383,9 +5384,10 @@ define('skylark-jquery/core',[
 	"skylark-utils/datax",
 	"skylark-utils/eventer",
 	"skylark-utils/finder",
+	"skylark-utils/fx",
 	"skylark-utils/styler",
 	"skylark-utils/query"
-],function(skylark,browser,langx,noder,datax,eventer,finder,styler,query){
+],function(skylark,browser,langx,noder,datax,eventer,finder,fx,styler,query){
 	var filter = Array.prototype.filter,
 		slice = Array.prototype.slice;
 
@@ -5559,11 +5561,20 @@ define('skylark-jquery/core',[
 	    	return fn;
 	    };
 
+	    $.cssHooks = styler.cssHooks;
+
 	    $.contains = noder.contains;
 
 	    $.css = styler.css;
 
 	    $.data = datax.data;
+
+	    $.fx = fx;
+	    $.fx.step = {
+
+        };
+
+        $.easing = {};
 
 	    $.offset = {};
 	    $.offset.setOffset = function(elem, options, i) {
