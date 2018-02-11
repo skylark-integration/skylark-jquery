@@ -94,7 +94,6 @@ define('skylark-langx/langx',["./skylark"], function(skylark) {
         slice = Array.prototype.slice,
         filter = Array.prototype.filter;
 
-
     var undefined, nextId = 0;
     function advise(dispatcher, type, advice, receiveArguments){
         var previous = dispatcher[type];
@@ -223,8 +222,8 @@ define('skylark-langx/langx',["./skylark"], function(skylark) {
                 }
 
                 // Check if we're overwriting an existing function
-                proto[name] = typeof props[name] == "function" && !noOverrided && typeof _super[name] == "function" ?
-                    (function(name, fn, superFn) {
+              proto[name] = typeof props[name] == "function" && !props[name]._constructor && !noOverrided && typeof _super[name] == "function" ?
+                      (function(name, fn, superFn) {
                         return function() {
                             var tmp = this.overrided;
 
@@ -300,11 +299,11 @@ define('skylark-langx/langx',["./skylark"], function(skylark) {
     })();
 
 
-    function clone( /*anything*/ src) {
+    function clone( /*anything*/ src,checkCloneMethod) {
         var copy;
         if (src === undefined || src === null) {
             copy = src;
-        } else if (src.clone) {
+        } else if (checkCloneMethod && src.clone) {
             copy = src.clone();
         } else if (isArray(src)) {
             copy = [];
@@ -324,6 +323,11 @@ define('skylark-langx/langx',["./skylark"], function(skylark) {
 
     }
 
+    function createEvent(type, props) {
+        var e = new CustomEvent(type, props);
+        return safeMixin(e, props);
+    }
+    
     function debounce(fn, wait) {
         var timeout,
             args,
@@ -479,6 +483,8 @@ define('skylark-langx/langx',["./skylark"], function(skylark) {
             if (isString(e)) {
                 e = new CustomEvent(e);
             }
+
+            e.target = this;
 
             var args = slice.call(arguments, 1);
             if (isDefined(args)) {
@@ -646,6 +652,7 @@ define('skylark-langx/langx',["./skylark"], function(skylark) {
         }
     });
 
+    
     function compact(array) {
         return filter.call(array, function(item) {
             return item != null;
@@ -808,6 +815,120 @@ define('skylark-langx/langx',["./skylark"], function(skylark) {
         return obj != null && obj.nodeType == obj.DOCUMENT_NODE;
     }
 
+
+  // Internal recursive comparison function for `isEqual`.
+  var eq, deepEq;
+  var SymbolProto = typeof Symbol !== 'undefined' ? Symbol.prototype : null;
+
+  eq = function(a, b, aStack, bStack) {
+    // Identical objects are equal. `0 === -0`, but they aren't identical.
+    // See the [Harmony `egal` proposal](http://wiki.ecmascript.org/doku.php?id=harmony:egal).
+    if (a === b) return a !== 0 || 1 / a === 1 / b;
+    // `null` or `undefined` only equal to itself (strict comparison).
+    if (a == null || b == null) return false;
+    // `NaN`s are equivalent, but non-reflexive.
+    if (a !== a) return b !== b;
+    // Exhaust primitive checks
+    var type = typeof a;
+    if (type !== 'function' && type !== 'object' && typeof b != 'object') return false;
+    return deepEq(a, b, aStack, bStack);
+  };
+
+  // Internal recursive comparison function for `isEqual`.
+  deepEq = function(a, b, aStack, bStack) {
+    // Unwrap any wrapped objects.
+    //if (a instanceof _) a = a._wrapped;
+    //if (b instanceof _) b = b._wrapped;
+    // Compare `[[Class]]` names.
+    var className = toString.call(a);
+    if (className !== toString.call(b)) return false;
+    switch (className) {
+      // Strings, numbers, regular expressions, dates, and booleans are compared by value.
+      case '[object RegExp]':
+      // RegExps are coerced to strings for comparison (Note: '' + /a/i === '/a/i')
+      case '[object String]':
+        // Primitives and their corresponding object wrappers are equivalent; thus, `"5"` is
+        // equivalent to `new String("5")`.
+        return '' + a === '' + b;
+      case '[object Number]':
+        // `NaN`s are equivalent, but non-reflexive.
+        // Object(NaN) is equivalent to NaN.
+        if (+a !== +a) return +b !== +b;
+        // An `egal` comparison is performed for other numeric values.
+        return +a === 0 ? 1 / +a === 1 / b : +a === +b;
+      case '[object Date]':
+      case '[object Boolean]':
+        // Coerce dates and booleans to numeric primitive values. Dates are compared by their
+        // millisecond representations. Note that invalid dates with millisecond representations
+        // of `NaN` are not equivalent.
+        return +a === +b;
+      case '[object Symbol]':
+        return SymbolProto.valueOf.call(a) === SymbolProto.valueOf.call(b);
+    }
+
+    var areArrays = className === '[object Array]';
+    if (!areArrays) {
+      if (typeof a != 'object' || typeof b != 'object') return false;
+
+      // Objects with different constructors are not equivalent, but `Object`s or `Array`s
+      // from different frames are.
+      var aCtor = a.constructor, bCtor = b.constructor;
+      if (aCtor !== bCtor && !(isFunction(aCtor) && aCtor instanceof aCtor &&
+                               isFunction(bCtor) && bCtor instanceof bCtor)
+                          && ('constructor' in a && 'constructor' in b)) {
+        return false;
+      }
+    }
+    // Assume equality for cyclic structures. The algorithm for detecting cyclic
+    // structures is adapted from ES 5.1 section 15.12.3, abstract operation `JO`.
+
+    // Initializing stack of traversed objects.
+    // It's done here since we only need them for objects and arrays comparison.
+    aStack = aStack || [];
+    bStack = bStack || [];
+    var length = aStack.length;
+    while (length--) {
+      // Linear search. Performance is inversely proportional to the number of
+      // unique nested structures.
+      if (aStack[length] === a) return bStack[length] === b;
+    }
+
+    // Add the first object to the stack of traversed objects.
+    aStack.push(a);
+    bStack.push(b);
+
+    // Recursively compare objects and arrays.
+    if (areArrays) {
+      // Compare array lengths to determine if a deep comparison is necessary.
+      length = a.length;
+      if (length !== b.length) return false;
+      // Deep compare the contents, ignoring non-numeric properties.
+      while (length--) {
+        if (!eq(a[length], b[length], aStack, bStack)) return false;
+      }
+    } else {
+      // Deep compare objects.
+      var keys = Object.keys(a), key;
+      length = keys.length;
+      // Ensure that both objects contain the same number of properties before comparing deep equality.
+      if (Object.keys(b).length !== length) return false;
+      while (length--) {
+        // Deep compare each member
+        key = keys[length];
+        if (!(b[key]!==undefined && eq(a[key], b[key], aStack, bStack))) return false;
+      }
+    }
+    // Remove the first object from the stack of traversed objects.
+    aStack.pop();
+    bStack.pop();
+    return true;
+  };
+
+  // Perform a deep comparison to check if two objects are equal.
+    function isEqual(a, b) {
+        return eq(a, b);
+    }
+
     function isFunction(value) {
         return type(value) == "function";
     }
@@ -862,7 +983,12 @@ define('skylark-langx/langx',["./skylark"], function(skylark) {
     }
 
     function makeArray(obj, offset, startWith) {
+       if (isArrayLike(obj) ) {
         return (startWith || []).concat(Array.prototype.slice.call(obj, offset || 0));
+      }
+
+      // array of single index
+      return [ obj ];             
     }
 
     function map(elements, callback) {
@@ -995,6 +1121,26 @@ define('skylark-langx/langx',["./skylark"], function(skylark) {
         return args.target;
     }
 
+    function result(obj, path, fallback) {
+        if (!isArray(path)) {
+            path = [path]
+        };
+        var length = path.length;
+        if (!length) {
+          return isFunction(fallback) ? fallback.call(obj) : fallback;
+        }
+        for (var i = 0; i < length; i++) {
+          var prop = obj == null ? void 0 : obj[path[i]];
+          if (prop === void 0) {
+            prop = fallback;
+            i = length; // Ensure we don't continue iterating.
+          }
+          obj = isFunction(prop) ? prop.call(obj) : prop;
+        }
+
+        return obj;
+    }
+
     function safeMixin() {
         var args = _parseMixinArgs.apply(this, arguments);
 
@@ -1057,6 +1203,205 @@ define('skylark-langx/langx',["./skylark"], function(skylark) {
             }); // String
     }
 
+
+    var Stateful = Evented.inherit({
+        init : function(attributes, options) {
+            var attrs = attributes || {};
+            options || (options = {});
+            this.cid = uniqueId(this.cidPrefix);
+            this.attributes = {};
+            if (options.collection) this.collection = options.collection;
+            if (options.parse) attrs = this.parse(attrs, options) || {};
+            var defaults = result(this, 'defaults');
+            attrs = mixin({}, defaults, attrs);
+            this.set(attrs, options);
+            this.changed = {};
+        },
+
+        // A hash of attributes whose current and previous value differ.
+        changed: null,
+
+        // The value returned during the last failed validation.
+        validationError: null,
+
+        // The default name for the JSON `id` attribute is `"id"`. MongoDB and
+        // CouchDB users may want to set this to `"_id"`.
+        idAttribute: 'id',
+
+        // The prefix is used to create the client id which is used to identify models locally.
+        // You may want to override this if you're experiencing name clashes with model ids.
+        cidPrefix: 'c',
+
+
+        // Return a copy of the model's `attributes` object.
+        toJSON: function(options) {
+          return clone(this.attributes);
+        },
+
+
+        // Get the value of an attribute.
+        get: function(attr) {
+          return this.attributes[attr];
+        },
+
+        // Returns `true` if the attribute contains a value that is not null
+        // or undefined.
+        has: function(attr) {
+          return this.get(attr) != null;
+        },
+
+        // Set a hash of model attributes on the object, firing `"change"`. This is
+        // the core primitive operation of a model, updating the data and notifying
+        // anyone who needs to know about the change in state. The heart of the beast.
+        set: function(key, val, options) {
+          if (key == null) return this;
+
+          // Handle both `"key", value` and `{key: value}` -style arguments.
+          var attrs;
+          if (typeof key === 'object') {
+            attrs = key;
+            options = val;
+          } else {
+            (attrs = {})[key] = val;
+          }
+
+          options || (options = {});
+
+          // Run validation.
+          if (!this._validate(attrs, options)) return false;
+
+          // Extract attributes and options.
+          var unset      = options.unset;
+          var silent     = options.silent;
+          var changes    = [];
+          var changing   = this._changing;
+          this._changing = true;
+
+          if (!changing) {
+            this._previousAttributes = clone(this.attributes);
+            this.changed = {};
+          }
+
+          var current = this.attributes;
+          var changed = this.changed;
+          var prev    = this._previousAttributes;
+
+          // For each `set` attribute, update or delete the current value.
+          for (var attr in attrs) {
+            val = attrs[attr];
+            if (!isEqual(current[attr], val)) changes.push(attr);
+            if (!isEqual(prev[attr], val)) {
+              changed[attr] = val;
+            } else {
+              delete changed[attr];
+            }
+            unset ? delete current[attr] : current[attr] = val;
+          }
+
+          // Update the `id`.
+          if (this.idAttribute in attrs) this.id = this.get(this.idAttribute);
+
+          // Trigger all relevant attribute changes.
+          if (!silent) {
+            if (changes.length) this._pending = options;
+            for (var i = 0; i < changes.length; i++) {
+              this.trigger('change:' + changes[i], this, current[changes[i]], options);
+            }
+          }
+
+          // You might be wondering why there's a `while` loop here. Changes can
+          // be recursively nested within `"change"` events.
+          if (changing) return this;
+          if (!silent) {
+            while (this._pending) {
+              options = this._pending;
+              this._pending = false;
+              this.trigger('change', this, options);
+            }
+          }
+          this._pending = false;
+          this._changing = false;
+          return this;
+        },
+
+        // Remove an attribute from the model, firing `"change"`. `unset` is a noop
+        // if the attribute doesn't exist.
+        unset: function(attr, options) {
+          return this.set(attr, void 0, mixin({}, options, {unset: true}));
+        },
+
+        // Clear all attributes on the model, firing `"change"`.
+        clear: function(options) {
+          var attrs = {};
+          for (var key in this.attributes) attrs[key] = void 0;
+          return this.set(attrs, mixin({}, options, {unset: true}));
+        },
+
+        // Determine if the model has changed since the last `"change"` event.
+        // If you specify an attribute name, determine if that attribute has changed.
+        hasChanged: function(attr) {
+          if (attr == null) return !isEmptyObject(this.changed);
+          return this.changed[attr] !== undefined;
+        },
+
+        // Return an object containing all the attributes that have changed, or
+        // false if there are no changed attributes. Useful for determining what
+        // parts of a view need to be updated and/or what attributes need to be
+        // persisted to the server. Unset attributes will be set to undefined.
+        // You can also pass an attributes object to diff against the model,
+        // determining if there *would be* a change.
+        changedAttributes: function(diff) {
+          if (!diff) return this.hasChanged() ? clone(this.changed) : false;
+          var old = this._changing ? this._previousAttributes : this.attributes;
+          var changed = {};
+          for (var attr in diff) {
+            var val = diff[attr];
+            if (isEqual(old[attr], val)) continue;
+            changed[attr] = val;
+          }
+          return !isEmptyObject(changed) ? changed : false;
+        },
+
+        // Get the previous value of an attribute, recorded at the time the last
+        // `"change"` event was fired.
+        previous: function(attr) {
+          if (attr == null || !this._previousAttributes) return null;
+          return this._previousAttributes[attr];
+        },
+
+        // Get all of the attributes of the model at the time of the previous
+        // `"change"` event.
+        previousAttributes: function() {
+          return clone(this._previousAttributes);
+        },
+
+        // Create a new model with identical attributes to this one.
+        clone: function() {
+          return new this.constructor(this.attributes);
+        },
+
+        // A model is new if it has never been saved to the server, and lacks an id.
+        isNew: function() {
+          return !this.has(this.idAttribute);
+        },
+
+        // Check if the model is currently in a valid state.
+        isValid: function(options) {
+          return this._validate({}, mixin({}, options, {validate: true}));
+        },
+
+        // Run validation against the next complete set of model attributes,
+        // returning `true` if all is well. Otherwise, fire an `"invalid"` event.
+        _validate: function(attrs, options) {
+          if (!options.validate || !this.validate) return true;
+          attrs = mixin({}, this.attributes, attrs);
+          var error = this.validationError = this.validate(attrs, options) || null;
+          if (!error) return true;
+          this.trigger('invalid', this, error, mixin(options, {validationError: error}));
+          return false;
+        }
+    });
+
     var _uid = 1;
 
     function uid(obj) {
@@ -1067,6 +1412,12 @@ define('skylark-langx/langx',["./skylark"], function(skylark) {
         return filter.call(array, function(item, idx) {
             return array.indexOf(item) == idx;
         })
+    }
+
+    var idCounter = 0;
+    function uniqueId (prefix) {
+        var id = ++idCounter + '';
+        return prefix ? prefix + id : id;
     }
 
     function langx() {
@@ -1088,6 +1439,8 @@ define('skylark-langx/langx',["./skylark"], function(skylark) {
         clone: clone,
 
         compact: compact,
+
+        createEvent : createEvent,
 
         dasherize: dasherize,
 
@@ -1125,6 +1478,8 @@ define('skylark-langx/langx',["./skylark"], function(skylark) {
 
         isEmptyObject: isEmptyObject,
 
+        isEqual: isEqual,
+
         isFunction: isFunction,
 
         isHtmlNode: isHtmlNode,
@@ -1161,6 +1516,8 @@ define('skylark-langx/langx',["./skylark"], function(skylark) {
 
         removeItem: removeItem,
 
+        result : result,
+        
         returnTrue: function() {
             return true;
         },
@@ -1175,6 +1532,8 @@ define('skylark-langx/langx',["./skylark"], function(skylark) {
             return JSON.stringify(value)
         },
 
+        Stateful: Stateful,
+
         substitute: substitute,
 
         toPixel: toPixel,
@@ -1186,6 +1545,8 @@ define('skylark-langx/langx',["./skylark"], function(skylark) {
         uid: uid,
 
         uniq: uniq,
+
+        uniqueId: uniqueId,
 
         upperFirst: function(str) {
             return str.charAt(0).toUpperCase() + str.slice(1);
@@ -1592,7 +1953,9 @@ define('skylark-utils/noder',[
     function createElement(tag, props,parent) {
         var node = document.createElement(tag);
         if (props) {
-            langx.mixin(node, props);
+            for (var name in props) {
+                node.setAttribute(name, props[name]);
+            }
         }
         if (parent) {
             append(parent,node);
@@ -2206,7 +2569,7 @@ define('skylark-utils/finder',[
         },
 
         'has': function(elm, idx, nodes, sel) {
-            return matches(elm, sel);
+            return find(elm, sel);
         },
 
 
@@ -2339,12 +2702,11 @@ define('skylark-utils/finder',[
                 }
             }
 
-            if (attributes) {
-                for (i = attributes.length; i--;) {
+            if (attributes = cond.attributes) {
+                 for (i = attributes.length; i--;) {
                     part = attributes[i];
                     if (part.operator ? !part.test(node.getAttribute(part.key)) : !node.hasAttribute(part.key)) return false;
                 }
-
             }
 
         }
@@ -2591,8 +2953,8 @@ define('skylark-utils/finder',[
     function ancestors(node, selector,root) {
         var ret = [],
             rootIsSelector = root && langx.isString(root);
-        while (node = node.parentNode) {
-                ret.push(node);
+        while ((node = node.parentNode) && (node.nodeType !== 9)) {
+            ret.push(node);
             if (root) {
                 if (rootIsSelector) {
                     if (matches(node,root)) {
@@ -3332,6 +3694,14 @@ define('skylark-utils/eventer',[
                                 }
                             }
 
+                            var originalEvent = self._event;
+                            if (originalEvent in hover) {
+                                var related = e.relatedTarget;
+                                if (related && (related === match || noder.contains(match, related))) {
+                                    return;
+                                }
+                            }                           
+
                             if (langx.isDefined(data)) {
                                 e.data = data;
                             }
@@ -3350,6 +3720,7 @@ define('skylark-utils/eventer',[
                     };
 
                     var event = self._event;
+/*
                     if (event in hover) {
                         var l = self._listener;
                         self._listener = function(e) {
@@ -3359,6 +3730,7 @@ define('skylark-utils/eventer',[
                             }
                         }
                     }
+*/
 
                     if (self._target.addEventListener) {
                         self._target.addEventListener(realEvent(event), self._listener, false);
@@ -3429,12 +3801,22 @@ define('skylark-utils/eventer',[
                     parsed = parse(event);
                 event = parsed.type;
 
-                var listener = events[event];
+                if (event) {
+                    var listener = events[event];
 
-                if (listener) {
-                    listener.remove(fn, langx.mixin({
-                        ns: parsed.ns
-                    }, options));
+                    if (listener) {
+                        listener.remove(fn, langx.mixin({
+                            ns: parsed.ns
+                        }, options));
+                    }
+                } else {
+                    //remove all events
+                    for (event in events) {
+                        var listener = events[event];
+                        listener.remove(fn, langx.mixin({
+                            ns: parsed.ns
+                        }, options));
+                    }
                 }
             }
         }),
@@ -4630,7 +5012,8 @@ define('skylark-utils/query',[
             var self = this,
                 params = slice.call(arguments);
             var result = this.map(function(idx, elem) {
-                if (elem.nodeType == 1) {
+                // if (elem.nodeType == 1) {
+                if (elem.querySelector) {
                     return func.apply(context, last ? [elem] : [elem, selector]);
                 }
             });
@@ -4643,7 +5026,7 @@ define('skylark-utils/query',[
     }
 
     function wrapper_selector_until(func, context, last) {
-        return function(util,selector) {
+        return function(util, selector) {
             var self = this,
                 params = slice.call(arguments);
             if (selector === undefined) {
@@ -4651,8 +5034,9 @@ define('skylark-utils/query',[
                 util = undefined;
             }
             var result = this.map(function(idx, elem) {
-                if (elem.nodeType == 1) {
-                    return func.apply(context, last ? [elem,util] : [elem, selector,util]);
+                // if (elem.nodeType == 1) {
+                if (elem.querySelector) {
+                    return func.apply(context, last ? [elem, util] : [elem, selector, util]);
                 }
             });
             if (last && selector) {
@@ -4706,7 +5090,7 @@ define('skylark-utils/query',[
                 forEach.call(self, function(elem, idx) {
                     var newValue;
                     if (oldValueFunc) {
-                        newValue = funcArg(elem, value, idx, oldValueFunc(elem,name));
+                        newValue = funcArg(elem, value, idx, oldValueFunc(elem, name));
                     } else {
                         newValue = value
                     }
@@ -4854,7 +5238,7 @@ define('skylark-utils/query',[
                 })));
             },
 
-            slice: function() { 
+            slice: function() {
                 return $(slice.apply(this, arguments))
             },
 
@@ -4931,16 +5315,16 @@ define('skylark-utils/query',[
             find: wrapper_selector(finder.descendants, finder),
 
             closest: wrapper_selector(finder.closest, finder),
-/*
-            closest: function(selector, context) {
-                var node = this[0],
-                    collection = false
-                if (typeof selector == 'object') collection = $(selector)
-                while (node && !(collection ? collection.indexOf(node) >= 0 : finder.matches(node, selector)))
-                    node = node !== context && !isDocument(node) && node.parentNode
-                return $(node)
-            },
-*/
+            /*
+                        closest: function(selector, context) {
+                            var node = this[0],
+                                collection = false
+                            if (typeof selector == 'object') collection = $(selector)
+                            while (node && !(collection ? collection.indexOf(node) >= 0 : finder.matches(node, selector)))
+                                node = node !== context && !isDocument(node) && node.parentNode
+                            return $(node)
+                        },
+            */
 
 
             parents: wrapper_selector(finder.ancestors, finder),
@@ -5031,7 +5415,7 @@ define('skylark-utils/query',[
             toggle: function(setting) {
                 return this.each(function() {
                     var el = $(this);
-                    (setting === undefined ? el.css("display") == "none" : setting) ? el.show() : el.hide()
+                    (setting === undefined ? el.css("display") == "none" : setting) ? el.show(): el.hide()
                 })
             },
 
