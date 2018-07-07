@@ -1,8 +1,8 @@
 (function(factory,globals) {
   var define = globals.define,
-  	  require = globals.require,
-  	  isAmd = (typeof define === 'function' && define.amd),
-  	  isCmd = (!isAmd && typeof exports !== 'undefined');
+      require = globals.require,
+      isAmd = (typeof define === 'function' && define.amd),
+      isCmd = (!isAmd && typeof exports !== 'undefined');
 
   if (!isAmd && !define) {
     var map = {};
@@ -34,10 +34,10 @@
             };
             require(id);
         } else {
-            resolved[id] = factory;
+            map[id] = factory;
         }
     };
-    require = globals.require = function(id) {
+    require =  globals.require = function(id) {
         if (!map.hasOwnProperty(id)) {
             throw new Error('Module ' + id + ' has not been defined');
         }
@@ -57,15 +57,19 @@
 
   factory(define,require);
 
-  if (!isAmd) {
-    var jQuery =  require("skylark-jquery/main");
-
-    if (isCmd) {
-      exports = jQuery;
-    } else {
-      globals.jQuery = globals.$ = jQuery;
+  if (isAmd) {
+    require.get = function(context, id, relMap, localRequire) {
+        context.intakeDefines(true);
+        return context.defined[id];
     }
   }
 
-})(function(define,require) {
+  var jQuery =  require("skylark-jquery/main");
 
+  if (isCmd) {
+      exports = jQuery;
+  } else {
+      globals.jQuery = globals.$ = jQuery;
+  }
+
+})(function(define,require) {

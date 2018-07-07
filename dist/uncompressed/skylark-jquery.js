@@ -7,9 +7,9 @@
  */
 (function(factory,globals) {
   var define = globals.define,
-  	  require = globals.require,
-  	  isAmd = (typeof define === 'function' && define.amd),
-  	  isCmd = (!isAmd && typeof exports !== 'undefined');
+      require = globals.require,
+      isAmd = (typeof define === 'function' && define.amd),
+      isCmd = (!isAmd && typeof exports !== 'undefined');
 
   if (!isAmd && !define) {
     var map = {};
@@ -41,10 +41,10 @@
             };
             require(id);
         } else {
-            resolved[id] = factory;
+            map[id] = factory;
         }
     };
-    require = globals.require = function(id) {
+    require =  globals.require = function(id) {
         if (!map.hasOwnProperty(id)) {
             throw new Error('Module ' + id + ' has not been defined');
         }
@@ -64,18 +64,22 @@
 
   factory(define,require);
 
-  if (!isAmd) {
-    var jQuery =  require("skylark-jquery/main");
-
-    if (isCmd) {
-      exports = jQuery;
-    } else {
-      globals.jQuery = globals.$ = jQuery;
+  if (isAmd) {
+    require.get = function(context, id, relMap, localRequire) {
+        context.intakeDefines(true);
+        return context.defined[id];
     }
   }
 
-})(function(define,require) {
+  var jQuery =  require("skylark-jquery/main");
 
+  if (isCmd) {
+      exports = jQuery;
+  } else {
+      globals.jQuery = globals.$ = jQuery;
+  }
+
+})(function(define,require) {
 define('skylark-jquery/core',[
 	"skylark-utils/skylark",
 	"skylark-utils/browser",
@@ -96,6 +100,15 @@ define('skylark-jquery/core',[
 
 	    $.camelCase = langx.camelCase;
 
+		$.cleanData = function( elems ) {
+			var elem,
+				i = 0;
+
+			for ( ; ( elem = elems[ i ] ) !== undefined; i++ ) {
+				datax.cleanData(elem);
+			}
+		};
+	
 	    $.each = langx.each;
 
 	    $.extend = function(target) {
@@ -169,12 +182,12 @@ define('skylark-jquery/core',[
     })(query);
 
     (function($){
-        $.Event = function Event(type, props) {
-            if (type && !langx.isString(type)) {
-                props = type;
-                type = props.type;
-            }
-            return eventer.create(type, props);
+        $.Event = function Event(src, props) {
+            if (langx.isString(src)) {
+            	var type = src;
+            	return eventer.create(type, props);
+	        }
+            return eventer.proxy(src, props);
         };
 
         $.event = {};
@@ -223,10 +236,6 @@ define('skylark-jquery/core',[
 	    $.fn.ready = function(callback) {
 	        eventer.ready(callback);
 	        return this;
-	    };
-
-	    $.fn.hover = function(fnOver, fnOut) {
-	        return this.mouseenter(fnOver).mouseleave(fnOut || fnOver);
 	    };
 
 	    $.fn.stop = function() {
@@ -327,6 +336,7 @@ define('skylark-jquery/core',[
         return  noder.createFragment(html);
     };
 
+    query.unique = langx.uniq;
 
     query.skylark = skylark;
 
@@ -395,7 +405,9 @@ define('skylark-jquery/deferred',[
                     return obj != null ? $.extend(obj, promise) : promise
                 }
             },
-            deferred = {}
+            deferred = {};
+
+        promise.pipe = promise.then;
 
         $.each(tuples, function(i, tuple) {
             var list = tuple[2],

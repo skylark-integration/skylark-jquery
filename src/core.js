@@ -18,6 +18,15 @@ define([
 
 	    $.camelCase = langx.camelCase;
 
+		$.cleanData = function( elems ) {
+			var elem,
+				i = 0;
+
+			for ( ; ( elem = elems[ i ] ) !== undefined; i++ ) {
+				datax.cleanData(elem);
+			}
+		};
+	
 	    $.each = langx.each;
 
 	    $.extend = function(target) {
@@ -91,12 +100,12 @@ define([
     })(query);
 
     (function($){
-        $.Event = function Event(type, props) {
-            if (type && !langx.isString(type)) {
-                props = type;
-                type = props.type;
-            }
-            return eventer.create(type, props);
+        $.Event = function Event(src, props) {
+            if (langx.isString(src)) {
+            	var type = src;
+            	return eventer.create(type, props);
+	        }
+            return eventer.proxy(src, props);
         };
 
         $.event = {};
@@ -145,10 +154,6 @@ define([
 	    $.fn.ready = function(callback) {
 	        eventer.ready(callback);
 	        return this;
-	    };
-
-	    $.fn.hover = function(fnOver, fnOut) {
-	        return this.mouseenter(fnOver).mouseleave(fnOut || fnOver);
 	    };
 
 	    $.fn.stop = function() {
@@ -249,6 +254,7 @@ define([
         return  noder.createFragment(html);
     };
 
+    query.unique = langx.uniq;
 
     query.skylark = skylark;
 

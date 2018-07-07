@@ -60,7 +60,9 @@ define([
                     return obj != null ? $.extend(obj, promise) : promise
                 }
             },
-            deferred = {}
+            deferred = {};
+
+        promise.pipe = promise.then;
 
         $.each(tuples, function(i, tuple) {
             var list = tuple[2],
