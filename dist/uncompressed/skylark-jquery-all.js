@@ -1,7 +1,7 @@
 /**
  * skylark-jquery - The skylark plugin library for fully compatible API with jquery.
  * @author Hudaokeji Co.,Ltd
- * @version v0.9.6-beta
+ * @version v0.9.6
  * @link www.skylarkjs.org
  * @license MIT
  */
@@ -7323,6 +7323,7 @@ define('skylark-jquery/ajax',[
     "./core",
     "./deferred"
 ], function($) {
+    
     //     zepto.ajax.js
     //     (c) 2010-2014 Thomas Fuchs
     //     Zepto.js may be freely distributed under the MIT license.

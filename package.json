@@ -1,6 +1,6 @@
 {
   "name": "skylark-jquery",
-  "version": "0.9.6-beta",
+  "version": "0.9.6",
   "description": "The skylark plugin library for fully compatible API with jquery.",
   "main": "-",
   "scripts": {
