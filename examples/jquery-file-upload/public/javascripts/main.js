@@ -65,10 +65,10 @@ $(function () {
             dataType: 'json',
             context: $('#fileupload')[0]
         }).always(function () {
-            $(this).removeClass('fileupload-processing');
+            $($('#fileupload')[0]).removeClass('fileupload-processing');
         }).done(function (result) {
-            $(this).fileupload('option', 'done')
-                .call(this, $.Event('done'), {result: result});
+            $($('#fileupload')[0]).fileupload('option', 'done')
+                .call($('#fileupload')[0], $.Event('done'), {result: result});
         });
     }
 

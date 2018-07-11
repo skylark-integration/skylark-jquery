@@ -267,7 +267,7 @@
                     dfd = $.Deferred();
                 loadImage.parseMetaData(data.files[data.index], function (result) {
                     $.extend(data, result);
-                    dfd.resolveWith(that, [data]);
+                    dfd.resolveWith(that, [data,"aaa"]);
                 }, options);
                 return dfd.promise();
             },

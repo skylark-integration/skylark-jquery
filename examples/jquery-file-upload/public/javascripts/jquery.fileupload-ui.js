@@ -97,9 +97,10 @@
                 ](data.context);
                 that._forceReflow(data.context);
                 that._transition(data.context);
-                data.process(function () {
-                    return $this.fileupload('process', data);
-                }).always(function () {
+//                data.process(function () {
+//                    return $this.fileupload('process', data);
+//                }).always(function () {
+                $this.fileupload('process', data).always(function () {
                     data.context.each(function (index) {
                         $(this).find('.size').text(
                             that._formatFileSize(data.files[index].size)
