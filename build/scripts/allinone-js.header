@@ -59,7 +59,9 @@
 
   if (isAmd) {
     require.get = function(context, id, relMap, localRequire) {
-        context.intakeDefines(true);
+        if (context.intakeDefines) {
+          context.intakeDefines(true);
+        }
         return context.defined[id];
     }
   }

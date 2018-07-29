@@ -33,6 +33,10 @@ define([
 				datax.cleanData(elem);
 			}
 		};
+
+		$.removeData = function(elm,name) {
+			datax.removeData(elm,name);
+		}
 	
 	    $.each = langx.each;
 
@@ -56,6 +60,10 @@ define([
 	        return filter.call(elements, callback)
 	    };
 
+	    $.attr = function(elm,name) {
+	    	return datax.attr(elm,name);
+	    };
+
 	    $.isArray = langx.isArray;
 	    $.isEmptyObject = langx.isEmptyObject;
 	    $.isFunction = langx.isFunction;
@@ -65,7 +73,7 @@ define([
 	    $.inArray = langx.inArray;
 
 	    $.makeArray = langx.makeArray;
-	    $.map = langx.map;
+	    $.map = langx.map;  // The behavior is somewhat different from the original jquery.
 
 	    $.noop = function() {
 	    };
@@ -261,7 +269,7 @@ define([
         return  noder.createFragment(html);
     };
 
-    query.unique = langx.uniq;
+    query.uniqueSort = query.unique = langx.uniq;
 
     query.skylark = skylark;
 

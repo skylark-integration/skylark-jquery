@@ -9,7 +9,8 @@ define([
     "./core",
     "./ajax",
     "./callbacks",
-    "./deferred"
+    "./deferred",
+    "./queue"
 ], function($) {
     return $;
 });
