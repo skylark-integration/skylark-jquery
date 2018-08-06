@@ -3,7 +3,8 @@ define([
     "./ajax",
     "./callbacks",
     "./deferred",
-    "./queue"
+    "./queue",
+	"skylark-utils/widgets"    
 ], function($) {
     return $;
 });

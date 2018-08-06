@@ -62,12 +62,20 @@ define([
     };
 
     $.ajax = function(options) {
-        return langx.Xhr.request(options.url,options);
+        var p = langx.Xhr.request(options.url,options);
+        if (options.success) {
+            p = p.then(options.success,options.error);
+        }
+        return p;
     };
 
     // handle optional data/success arguments
     function parseArguments(url, data, success, dataType) {
-        if ($.isFunction(data)) dataType = success, success = data, data = undefined
+        if ($.isFunction(url)) {
+            dataType = data, success = url, data = undefined,url = undefined;
+        } else if ($.isFunction(data)) {
+            dataType = success, success = data, data = undefined;
+        } 
         if (!$.isFunction(success)) dataType = success, success = undefined
         return {
             url: url,
@@ -96,11 +104,11 @@ define([
     $.fn.load = function(url, data, success) {
         if (!this.length) return this
         var self = this,
-            parts = url.split(/\s/),
-            selector,
             options = parseArguments(url, data, success),
+            parts = options.url && options.url.split(/\s/),
+            selector,
             callback = options.success
-        if (parts.length > 1) options.url = parts[0], selector = parts[1]
+        if (parts && parts.length > 1) options.url = parts[0], selector = parts[1]
         options.success = function(response) {
             self.html(selector ?
                 $('<div>').html(response.replace(rscript, "")).find(selector) : response)
