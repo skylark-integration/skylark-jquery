@@ -357,9 +357,15 @@ define('skylark-jquery/ajax',[
     "./core",
     "skylark-langx/langx"
 ], function($,langx) {
-    $.ajaxJSONP = function(options, langx) {
-        if (!('type' in options)) return $.ajax(options)
+    var jsonpID = 0;
 
+    function appendQuery(url, query) {
+        if (query == '') return url
+        return (url + '&' + query).replace(/[&?]{1,2}/, '?')
+    }
+    
+    $.ajaxJSONP = function(options) {
+        var deferred = new langx.Deferred();
         var _callbackName = options.jsonpCallback,
             callbackName = ($.isFunction(_callbackName) ?
                 _callbackName() : _callbackName) || ('jsonp' + (++jsonpID)),
@@ -370,18 +376,22 @@ define('skylark-jquery/ajax',[
                 $(script).triggerHandler('error', errorType || 'abort')
             },
             xhr = { abort: abort },
-            abortTimeout
+            abortTimeout;
 
-        if (deferred) deferred.promise(xhr)
+        for (var key in options.data) {
+            options.url = appendQuery(options.url, key + "=" + options.data[key]);
+        }
+         
+//        if (deferred) deferred.promise(xhr)
 
         $(script).on('load error', function(e, errorType) {
             clearTimeout(abortTimeout)
             $(script).off().remove()
 
             if (e.type == 'error' || !responseData) {
-                ajaxError(null, errorType || 'error', xhr, options, deferred)
+                deferred.reject(e);
             } else {
-                ajaxSuccess(responseData[0], xhr, options, deferred)
+                deferred.resolve(responseData[0],200,xhr);
             }
 
             window[callbackName] = originalCallback
@@ -390,11 +400,6 @@ define('skylark-jquery/ajax',[
 
             originalCallback = responseData = undefined
         })
-
-        if (ajaxBeforeSend(xhr, options) === false) {
-            abort('abort')
-            return xhr
-        }
 
         window[callbackName] = function() {
             responseData = arguments
@@ -407,7 +412,7 @@ define('skylark-jquery/ajax',[
             abort('timeout')
         }, options.timeout)
 
-        return xhr;
+        return deferred;
     }
 
     $.ajaxSettings = langx.Xhr.defaultOptions;
@@ -417,6 +422,15 @@ define('skylark-jquery/ajax',[
     };
 
     $.ajax = function(options) {
+        if ('jsonp' == options.dataType) {
+            var hasPlaceholder = /\?.+=\?/.test(options.url);
+
+            if (!hasPlaceholder)
+                options.url = appendQuery(options.url,
+                    options.jsonp ? (options.jsonp + '=?') : options.jsonp === false ? '' : 'callback=?')
+            return $.ajaxJSONP(options);
+        }
+
         var p = langx.Xhr.request(options.url,options);
         if (options.success) {
             p = p.then(options.success,options.error);
