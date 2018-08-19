@@ -379,7 +379,7 @@ define('skylark-langx/langx',["./skylark"], function(skylark) {
                             };
                         })(name, prop, _super[name]) :
                         prop;
-                } else if (typeof prop == "object" && prop!==null && (prop.get || prop.value !== undefined)) {
+                } else if (typeof prop == "object" && prop!==null && (prop.get)) {
                     Object.defineProperty(proto,name,prop);
                 } else {
                     proto[name] = prop;
@@ -611,6 +611,12 @@ define('skylark-langx/langx',["./skylark"], function(skylark) {
         });
     }
 
+    /*
+     * Converts camel case into dashes.
+     * @param {String} str
+     * @return {String}
+     * @exapmle marginTop -> margin-top
+     */
     function dasherize(str) {
         return str.replace(/::/g, '/')
             .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
@@ -2110,7 +2116,6 @@ define('skylark-langx/langx',["./skylark"], function(skylark) {
 
     var Xhr = (function(){
         var jsonpID = 0,
-            document = window.document,
             key,
             name,
             rscript = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
@@ -5530,6 +5535,16 @@ define('skylark-utils/geom',[
     }
 
 
+    function marginSize(elm) {
+        var obj = this.size(elm),
+            me = this.marginExtents(elm);
+
+        return {
+                width: obj.width + me.left + me.right,
+                height: obj.height + me.top + me.bottom
+            };
+    }
+
     function paddingExtents(elm) {
         var s = getComputedStyle(elm);
         return {
@@ -5778,6 +5793,8 @@ define('skylark-utils/geom',[
         marginExtents: marginExtents,
 
         marginRect : marginRect,
+
+        marginSize : marginSize,
 
         offsetParent: offsetParent,
 
@@ -6581,9 +6598,25 @@ define('skylark-utils/query',[
             },
 
             is: function(selector) {
-                return this.length > 0 && finder.matches(this[0], selector)
+                if (this.length > 0) {
+                    var self = this;
+                    if (langx.isString(selector)) {
+                        return some.call(self,function(elem) {
+                            return finder.matches(elem, selector);
+                        });
+                    } else if (langx.isArrayLike(selector)) {
+                       return some.call(self,function(elem) {
+                            return langx.inArray(elem, selector);
+                        });
+                    } else if (langx.isHtmlNode(selector)) {
+                       return some.call(self,function(elem) {
+                            return elem ==  selector;
+                        });
+                    }
+                }
+                return false;
             },
-
+            
             not: function(selector) {
                 var nodes = []
                 if (isFunction(selector) && selector.call !== undefined)
@@ -6660,6 +6693,7 @@ define('skylark-utils/query',[
                 ret.prevObject = this;
                 return ret;
             },
+            
             show: wrapper_every_act(fx.show, fx),
 
             replaceWith: function(newContent) {
@@ -6818,6 +6852,8 @@ define('skylark-utils/query',[
 
         $.fn.height = wrapper_value(geom.height, geom, geom.height);
 
+        $.fn.clientSize = wrapper_value(geom.clientSize, geom.clientSize);
+
         ['width', 'height'].forEach(function(dimension) {
             var offset, Dimension = dimension.replace(/./, function(m) {
                 return m[0].toUpperCase()
@@ -6868,9 +6904,9 @@ define('skylark-utils/query',[
             };
         })
 
-        $.fn.innerWidth = wrapper_value(geom.width, geom, geom.width);
+        $.fn.innerWidth = wrapper_value(geom.clientWidth, geom, geom.clientWidth);
 
-        $.fn.innerHeight = wrapper_value(geom.height, geom, geom.height);
+        $.fn.innerHeight = wrapper_value(geom.clientHeight, geom, geom.clientHeight);
 
 
         var traverseNode = noder.traverse;
@@ -9473,8 +9509,8 @@ define('skylark-utils/widgets',[
 		};
 	};
 
-	function widget() {
-	    return widget;
+	function widgets() {
+	    return widgets;
 	}
 
 	var Widget = langx.Evented.inherit({
@@ -9485,8 +9521,10 @@ define('skylark-utils/widgets',[
 	        		options = el;
 	            el = options;
 	        }
-	        if (el) {
+	        if (langx.isHtmlNode(el)) {
 	        	this.el = el;
+	    	} else {
+	    		this.el = null;
 	    	}
 	        if (options) {
 	            langx.mixin(this,options);
@@ -9543,7 +9581,7 @@ define('skylark-utils/widgets',[
 	    // alternative DOM manipulation API and are only required to set the
 	    // `this.el` property.
 	    _setElement: function(el) {
-	      this.$el = widget.$(el);
+	      this.$el = widgets.$(el);
 	      this.el = this.$el[0];
 	    },
 
@@ -9643,7 +9681,7 @@ define('skylark-utils/widgets',[
 
 	};
 
-	langx.mixin(widget, {
+	langx.mixin(widgets, {
 		$ : query,
 
 		define : defineWidgetClass,
@@ -9651,7 +9689,7 @@ define('skylark-utils/widgets',[
 	});
 
 
-	return skylark.widget = widget;
+	return skylark.widgets = widgets;
 });
 
 define('skylark-jquery/main',[
