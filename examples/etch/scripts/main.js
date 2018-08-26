@@ -20,7 +20,7 @@ require.config({
   }
   ,packages : [
      { name: "skylark", location: "../../../lib/skylark" },
-     { name: "skylark-jquery", location: "../../../src/skylark-jquery" }
+     { name: "skylark-jquery", location: "../../../src" }
   ]
   , paths: {
 	'underscore' : "http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min",
