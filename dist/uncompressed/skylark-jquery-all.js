@@ -2866,6 +2866,11 @@ define('skylark-utils/styler',[
     }
 
     // access className property while respecting SVGAnimatedString
+    /*
+     * Adds the specified class(es) to each element in the set of matched elements.
+     * @param {HTMLElement} node
+     * @param {String} value
+     */
     function className(node, value) {
         var klass = node.className || '',
             svg = klass && klass.baseVal !== undefined
@@ -2874,6 +2879,15 @@ define('skylark-utils/styler',[
         svg ? (klass.baseVal = value) : (node.className = value)
     }
 
+    function disabled(elm, value ) {
+        if (arguments.length < 2) {
+            return !!this.dom.disabled;
+        }
+
+        elm.disabled = value;
+
+        return this;
+    }
 
     var elementDisplay = {};
 
@@ -2889,7 +2903,10 @@ define('skylark-utils/styler',[
         }
         return elementDisplay[nodeName]
     }
-
+    /*
+     * Display the matched elements.
+     * @param {HTMLElement} elm
+     */
     function show(elm) {
         styler.css(elm, "display", "");
         if (styler.css(elm, "display") == "none") {
@@ -2902,11 +2919,20 @@ define('skylark-utils/styler',[
         return styler.css(elm, "display") == "none" || styler.css(elm, "opacity") == 0;
     }
 
+    /*
+     * Hide the matched elements.
+     * @param {HTMLElement} elm
+     */
     function hide(elm) {
         styler.css(elm, "display", "none");
         return this;
     }
 
+    /*
+     * Adds the specified class(es) to each element in the set of matched elements.
+     * @param {HTMLElement} elm
+     * @param {String} name
+     */
     function addClass(elm, name) {
         if (!name) return this
         var cls = className(elm),
@@ -2927,7 +2953,12 @@ define('skylark-utils/styler',[
 
         return this;
     }
-
+    /*
+     * Get the value of a computed style property for the first element in the set of matched elements or set one or more CSS properties for every matched element.
+     * @param {HTMLElement} elm
+     * @param {String} property
+     * @param {Any} value
+     */
     function css(elm, property, value) {
         if (arguments.length < 3) {
             var computedStyle,
@@ -2967,12 +2998,21 @@ define('skylark-utils/styler',[
         return this;
     }
 
-
+    /*
+     * Determine whether any of the matched elements are assigned the given class.
+     * @param {HTMLElement} elm
+     * @param {String} name
+     */
     function hasClass(elm, name) {
         var re = classRE(name);
         return elm.className && elm.className.match(re);
     }
 
+    /*
+     * Remove a single class, multiple classes, or all classes from each element in the set of matched elements.
+     * @param {HTMLElement} elm
+     * @param {String} name
+     */
     function removeClass(elm, name) {
         if (name) {
             var cls = className(elm),
@@ -2993,12 +3033,18 @@ define('skylark-utils/styler',[
 
             className(elm, cls.trim());
         } else {
-            className(elm,"");
+            className(elm, "");
         }
 
         return this;
     }
 
+    /*
+     * Add or remove one or more classes from the specified element.
+     * @param {HTMLElement} elm
+     * @param {String} name
+     * @param {} when
+     */
     function toggleClass(elm, name, when) {
         var self = this;
         name.split(/\s+/g).forEach(function(klass) {
@@ -3021,13 +3067,14 @@ define('skylark-utils/styler',[
 
     langx.mixin(styler, {
         autocssfix: false,
-        cssHooks : {
+        cssHooks: {
 
         },
-        
+
         addClass: addClass,
         className: className,
         css: css,
+        disabled : disabled,        
         hasClass: hasClass,
         hide: hide,
         isInvisible: isInvisible,
@@ -3038,7 +3085,6 @@ define('skylark-utils/styler',[
 
     return skylark.styler = styler;
 });
-
 define('skylark-utils/noder',[
     "./skylark",
     "./langx",
@@ -3123,7 +3169,10 @@ define('skylark-utils/noder',[
         }
         return this;
     }
-
+    /*   
+     * Get the children of the specified node, including text and comment nodes.
+     * @param {HTMLElement} elm
+     */
     function contents(elm) {
         if (nodeName(elm, "iframe")) {
             return elm.contentDocument;
@@ -3131,7 +3180,13 @@ define('skylark-utils/noder',[
         return elm.childNodes;
     }
 
-    function createElement(tag, props,parent) {
+    /*   
+     * Create a element and set attributes on it.
+     * @param {HTMLElement} tag
+     * @param {props} props
+     * @param } parent
+     */
+    function createElement(tag, props, parent) {
         var node = document.createElement(tag);
         if (props) {
             for (var name in props) {
@@ -3139,11 +3194,15 @@ define('skylark-utils/noder',[
             }
         }
         if (parent) {
-            append(parent,node);
+            append(parent, node);
         }
         return node;
     }
 
+    /*   
+     * Create a DocumentFragment from the HTML fragment.
+     * @param {String} html
+     */
     function createFragment(html) {
         // A special case optimization for a single tag
         html = langx.trim(html);
@@ -3166,6 +3225,11 @@ define('skylark-utils/noder',[
         return dom;
     }
 
+    /*   
+     * Create a deep copy of the set of matched elements.
+     * @param {HTMLElement} node
+     * @param {Boolean} deep
+     */
     function clone(node, deep) {
         var self = this,
             clone;
@@ -3188,18 +3252,35 @@ define('skylark-utils/noder',[
         }
     }
 
+    /*   
+     * Check to see if a dom node is a descendant of another dom node .
+     * @param {String} node
+     * @param {Node} child
+     */
     function contains(node, child) {
         return isChildOf(child, node);
     }
 
+    /*   
+     * Create a new Text node.
+     * @param {String} text
+     * @param {Node} child
+     */
     function createTextNode(text) {
         return document.createTextNode(text);
     }
 
+    /*   
+     * Get the current document object.
+     */
     function doc() {
         return document;
     }
 
+    /*   
+     * Remove all child nodes of the set of matched elements from the DOM.
+     * @param {Object} node
+     */
     function empty(node) {
         while (node.hasChildNodes()) {
             var child = node.firstChild;
@@ -3209,6 +3290,7 @@ define('skylark-utils/noder',[
     }
 
     var fulledEl = null;
+
     function fullScreen(el) {
         if (el === false) {
             browser.exitFullScreen.apply(document);
@@ -3216,15 +3298,20 @@ define('skylark-utils/noder',[
             browser.requestFullScreen.apply(el);
             fulledEl = el;
         } else {
-          return (
-            document.fullscreenElement ||
-            document.webkitFullscreenElement ||
-            document.mozFullScreenElement ||
-            document.msFullscreenElement
-          )
+            return (
+                document.fullscreenElement ||
+                document.webkitFullscreenElement ||
+                document.mozFullScreenElement ||
+                document.msFullscreenElement
+            )
         }
     }
 
+    /*   
+     * Get the HTML contents of the first element in the set of matched elements.
+     * @param {HTMLElement} node
+     * @param {String} html
+     */
     function html(node, html) {
         if (html === undefined) {
             return node.innerHTML;
@@ -3243,7 +3330,13 @@ define('skylark-utils/noder',[
         }
     }
 
-    function isChildOf(node, parent,directly) {
+    /*   
+     * Check to see if a dom node is a descendant of another dom node.
+     * @param {Node} node
+     * @param {Node} parent
+     * @param {Node} directly
+     */
+    function isChildOf(node, parent, directly) {
         if (directly) {
             return node.parentNode === parent;
         }
@@ -3261,10 +3354,20 @@ define('skylark-utils/noder',[
         return false;
     }
 
+    /*   
+     * Check to see if a dom node is a descendant of another dom node.
+     * @param {Node} node
+     * @param {Node} parent
+     * @param {Node} directly
+     */
     function isDoc(node) {
         return node != null && node.nodeType == node.DOCUMENT_NODE
     }
 
+    /*   
+     * Get the owner document object for the specified element.
+     * @param {Node} elm
+     */
     function ownerDoc(elm) {
         if (!elm) {
             return document;
@@ -3277,12 +3380,21 @@ define('skylark-utils/noder',[
         return elm.ownerDocument;
     }
 
+    /*   
+     *
+     * @param {Node} elm
+     */
     function ownerWindow(elm) {
         var doc = ownerDoc(elm);
-        return  doc.defaultView || doc.parentWindow;
-    } 
+        return doc.defaultView || doc.parentWindow;
+    }
 
-
+    /*   
+     * insert one or more nodes as the first children of the specified node.
+     * @param {Node} node
+     * @param {Node or ArrayLike} placing
+     * @param {Boolean Optional} copyByClone
+     */
     function prepend(node, placing, copyByClone) {
         var parentNode = node,
             refNode = parentNode.firstChild,
@@ -3297,7 +3409,10 @@ define('skylark-utils/noder',[
         return this;
     }
 
-
+    /*   
+     *
+     * @param {Node} elm
+     */
     function offsetParent(elm) {
         var parent = elm.offsetParent || document.body;
         while (parent && !rootNodeRE.test(parent.nodeName) && styler.css(parent, "position") == "static") {
@@ -3306,6 +3421,11 @@ define('skylark-utils/noder',[
         return parent;
     }
 
+    /*   
+     *
+     * @param {Node} elm
+     * @param {Node} params
+     */
     function overlay(elm, params) {
         var overlayDiv = createElement("div", params);
         styler.css(overlayDiv, {
@@ -3322,24 +3442,46 @@ define('skylark-utils/noder',[
 
     }
 
-
-
+    /*   
+     * Remove the set of matched elements from the DOM.
+     * @param {Node} node
+     */
     function remove(node) {
         if (node && node.parentNode) {
             try {
-               node.parentNode.removeChild(node);
+                node.parentNode.removeChild(node);
             } catch (e) {
-                console.warn("The node is already removed",e);
+                console.warn("The node is already removed", e);
             }
-         }
+        }
         return this;
     }
 
+    function removeChild(node,children) {
+        if (!langx.isArrayLike(children)) {
+            children = [children];
+        }
+        for (var i=0;i<children.length;i++) {
+            node.removeChild(children[i]);
+        }
+
+        return this;
+    }
+    /*   
+     * Replace an old node with the specified node.
+     * @param {Node} node
+     * @param {Node} oldNode
+     */
     function replace(node, oldNode) {
         oldNode.parentNode.replaceChild(node, oldNode);
         return this;
     }
 
+    /*   
+     * Replace an old node with the specified node.
+     * @param {HTMLElement} elm
+     * @param {Node} params
+     */
     function throb(elm, params) {
         params = params || {};
         var self = this,
@@ -3391,6 +3533,11 @@ define('skylark-utils/noder',[
         };
     }
 
+    /*   
+     * traverse the specified node and its descendants, perform the callback function on each
+     * @param {Node} node
+     * @param {Function} fn
+     */
     function traverse(node, fn) {
         fn(node)
         for (var i = 0, len = node.childNodes.length; i < len; i++) {
@@ -3399,6 +3546,10 @@ define('skylark-utils/noder',[
         return this;
     }
 
+    /*   
+     *
+     * @param {Node} node
+     */
     function reverse(node) {
         var firstChild = node.firstChild;
         for (var i = node.children.length - 1; i > 0; i--) {
@@ -3409,6 +3560,11 @@ define('skylark-utils/noder',[
         }
     }
 
+    /*   
+     * Wrap an HTML structure around each element in the set of matched elements.
+     * @param {Node} node
+     * @param {Node} wrapperNode
+     */
     function wrapper(node, wrapperNode) {
         if (langx.isString(wrapperNode)) {
             wrapperNode = this.createFragment(wrapperNode).firstChild;
@@ -3417,6 +3573,11 @@ define('skylark-utils/noder',[
         wrapperNode.appendChild(node);
     }
 
+    /*   
+     * Wrap an HTML structure around the content of each element in the set of matched
+     * @param {Node} node
+     * @param {Node} wrapperNode
+     */
     function wrapperInner(node, wrapperNode) {
         var childNodes = slice.call(node.childNodes);
         node.appendChild(wrapperNode);
@@ -3426,6 +3587,10 @@ define('skylark-utils/noder',[
         return this;
     }
 
+    /*   
+     * Remove the parents of the set of matched elements from the DOM, leaving the matched
+     * @param {Node} node
+     */
     function unwrap(node) {
         var child, parent = node.parentNode;
         if (parent) {
@@ -3439,7 +3604,7 @@ define('skylark-utils/noder',[
     }
 
     langx.mixin(noder, {
-        body : function() {
+        body: function() {
             return document.body;
         },
 
@@ -3458,7 +3623,7 @@ define('skylark-utils/noder',[
 
         empty: empty,
 
-        fullScreen : fullScreen,
+        fullScreen: fullScreen,
 
         html: html,
 
@@ -3466,13 +3631,13 @@ define('skylark-utils/noder',[
 
         isDoc: isDoc,
 
-        isWindow : langx.isWindow,
+        isWindow: langx.isWindow,
 
-        offsetParent : offsetParent,
-        
+        offsetParent: offsetParent,
+
         ownerDoc: ownerDoc,
 
-        ownerWindow : ownerWindow,
+        ownerWindow: ownerWindow,
 
         after: after,
 
@@ -3483,6 +3648,8 @@ define('skylark-utils/noder',[
         append: append,
 
         remove: remove,
+
+        removeChild : removeChild,
 
         replace: replace,
 
@@ -3501,7 +3668,6 @@ define('skylark-utils/noder',[
 
     return skylark.noder = noder;
 });
-
 define('skylark-utils/finder',[
     "./skylark",
     "./langx",
@@ -3754,7 +3920,7 @@ define('skylark-utils/finder',[
 
     var pseudos = local.pseudos = {
         // custom pseudos
-        "button": function( elem ) {
+        "button": function(elem) {
             var name = elem.nodeName.toLowerCase();
             return name === "input" && elem.type === "button" || name === "button";
         },
@@ -3779,7 +3945,7 @@ define('skylark-utils/finder',[
             return (idx == value);
         },
 
-        'even' : function(elm, idx, nodes, value) {
+        'even': function(elm, idx, nodes, value) {
             return (idx % 2) === 0;
         },
 
@@ -3800,16 +3966,16 @@ define('skylark-utils/finder',[
         },
 
         // Element/input types
-        "header": function( elem ) {
-            return rheader.test( elem.nodeName );
+        "header": function(elem) {
+            return rheader.test(elem.nodeName);
         },
 
         'hidden': function(elm) {
             return !local.pseudos["visible"](elm);
         },
 
-        "input": function( elem ) {
-            return rinputs.test( elem.nodeName );
+        "input": function(elem) {
+            return rinputs.test(elem.nodeName);
         },
 
         'last': function(elm, idx, nodes) {
@@ -3824,10 +3990,14 @@ define('skylark-utils/finder',[
             return !matches(elm, sel);
         },
 
-        'odd' : function(elm, idx, nodes, value) {
+        'odd': function(elm, idx, nodes, value) {
             return (idx % 2) === 1;
         },
 
+        /*   
+         * Get the parent of each element in the current set of matched elements.
+         * @param {Object} elm
+         */
         'parent': function(elm) {
             return !!elm.parentNode;
         },
@@ -3836,7 +4006,7 @@ define('skylark-utils/finder',[
             return !!elm.selected;
         },
 
-        'text': function(elm){
+        'text': function(elm) {
             return elm.type === "text";
         },
 
@@ -3845,7 +4015,7 @@ define('skylark-utils/finder',[
         }
     };
 
-    ["first","eq","last"].forEach(function(item){
+    ["first", "eq", "last"].forEach(function(item) {
         pseudos[item].isArrayFilter = true;
     });
 
@@ -3853,26 +4023,35 @@ define('skylark-utils/finder',[
 
     pseudos["nth"] = pseudos["eq"];
 
-    function createInputPseudo( type ) {
-        return function( elem ) {
+    function createInputPseudo(type) {
+        return function(elem) {
             var name = elem.nodeName.toLowerCase();
             return name === "input" && elem.type === type;
         };
     }
 
-    function createButtonPseudo( type ) {
-        return function( elem ) {
+    function createButtonPseudo(type) {
+        return function(elem) {
             var name = elem.nodeName.toLowerCase();
             return (name === "input" || name === "button") && elem.type === type;
         };
     }
 
     // Add button/input type pseudos
-    for ( i in { radio: true, checkbox: true, file: true, password: true, image: true } ) {
-        pseudos[ i ] = createInputPseudo( i );
+    for (i in {
+        radio: true,
+        checkbox: true,
+        file: true,
+        password: true,
+        image: true
+    }) {
+        pseudos[i] = createInputPseudo(i);
     }
-    for ( i in { submit: true, reset: true } ) {
-        pseudos[ i ] = createButtonPseudo( i );
+    for (i in {
+        submit: true,
+        reset: true
+    }) {
+        pseudos[i] = createButtonPseudo(i);
     }
 
 
@@ -3897,7 +4076,7 @@ define('skylark-utils/finder',[
         if (attributes = cond.attributes) {
             for (var i = 0; i < attributes.length; i++) {
                 if (attributes[i].operator) {
-                    nativeSelector += ("[" + attributes[i].key + attributes[i].operator + JSON.stringify(attributes[i].value)  +"]");
+                    nativeSelector += ("[" + attributes[i].key + attributes[i].operator + JSON.stringify(attributes[i].value) + "]");
                 } else {
                     nativeSelector += ("[" + attributes[i].key + "]");
                 }
@@ -3933,7 +4112,7 @@ define('skylark-utils/finder',[
 
     };
 
-    local.check = function(node, cond, idx, nodes,arrayFilte) {
+    local.check = function(node, cond, idx, nodes, arrayFilte) {
         var tag,
             id,
             classes,
@@ -3967,7 +4146,7 @@ define('skylark-utils/finder',[
             }
 
             if (attributes = cond.attributes) {
-                 for (i = attributes.length; i--;) {
+                for (i = attributes.length; i--;) {
                     part = attributes[i];
                     if (part.operator ? !part.test(node.getAttribute(part.key)) : !node.hasAttribute(part.key)) return false;
                 }
@@ -3995,14 +4174,14 @@ define('skylark-utils/finder',[
 
     local.match = function(node, selector) {
 
-        var parsed ;
+        var parsed;
 
         if (langx.isString(selector)) {
             parsed = local.Slick.parse(selector);
         } else {
-            parsed = selector;            
+            parsed = selector;
         }
-        
+
         if (!parsed) {
             return true;
         }
@@ -4016,7 +4195,7 @@ define('skylark-utils/finder',[
             (currentExpression = expressions[i]); i++) {
             if (currentExpression.length == 1) {
                 var exp = currentExpression[0];
-                if (this.check(node,exp)) {
+                if (this.check(node, exp)) {
                     return true;
                 }
                 simpleExpCounter++;
@@ -4038,14 +4217,14 @@ define('skylark-utils/finder',[
     };
 
 
-    local.filterSingle = function(nodes, exp){
+    local.filterSingle = function(nodes, exp) {
         var matchs = filter.call(nodes, function(node, idx) {
-            return local.check(node, exp, idx, nodes,false);
-        });    
+            return local.check(node, exp, idx, nodes, false);
+        });
 
         matchs = filter.call(matchs, function(node, idx) {
-            return local.check(node, exp, idx, matchs,true);
-        }); 
+            return local.check(node, exp, idx, matchs, true);
+        });
         return matchs;
     };
 
@@ -4055,7 +4234,7 @@ define('skylark-utils/finder',[
         if (langx.isString(selector)) {
             parsed = local.Slick.parse(selector);
         } else {
-            return local.filterSingle(nodes,selector);           
+            return local.filterSingle(nodes, selector);
         }
 
         // simple (single) selectors
@@ -4068,7 +4247,7 @@ define('skylark-utils/finder',[
             if (currentExpression.length == 1) {
                 var exp = currentExpression[0];
 
-                var matchs = local.filterSingle(nodes,exp);  
+                var matchs = local.filterSingle(nodes, exp);
 
                 ret = langx.uniq(ret.concat(matchs));
             } else {
@@ -4077,8 +4256,8 @@ define('skylark-utils/finder',[
         }
 
         return ret;
- 
-    };    
+
+    };
 
     local.combine = function(elm, bit) {
         var op = bit.combinator,
@@ -4147,14 +4326,14 @@ define('skylark-utils/finder',[
                         nodes = filter.call(nodes, function(item, idx) {
                             return local.check(item, {
                                 pseudos: [divided.customPseudos[i]]
-                            }, idx, nodes,false)
+                            }, idx, nodes, false)
                         });
 
                         nodes = filter.call(nodes, function(item, idx) {
                             return local.check(item, {
                                 pseudos: [divided.customPseudos[i]]
-                            }, idx, nodes,true)
-                        });                        
+                            }, idx, nodes, true)
+                        });
                     }
                 }
                 break;
@@ -4194,7 +4373,12 @@ define('skylark-utils/finder',[
         return founds;
     }
 
-
+    /*
+     * Get the nearest ancestor of the specified element,optional matched by a selector.
+     * @param {HTMLElement} node
+     * @param {String Optional } selector
+     * @param {Object} root
+     */
     function ancestor(node, selector, root) {
         var rootIsSelector = root && langx.isString(root);
         while (node = node.parentNode) {
@@ -4203,45 +4387,60 @@ define('skylark-utils/finder',[
             }
             if (root) {
                 if (rootIsSelector) {
-                    if (matches(node,root)) {
+                    if (matches(node, root)) {
                         break;
                     }
                 } else if (node == root) {
                     break;
                 }
-            } 
+            }
         }
         return null;
     }
 
-    function ancestors(node, selector,root) {
+    /*
+     * Get the ancestors of the specitied element , optionally filtered by a selector.
+     * @param {HTMLElement} node
+     * @param {String Optional } selector
+     * @param {Object} root
+     */
+    function ancestors(node, selector, root) {
         var ret = [],
             rootIsSelector = root && langx.isString(root);
         while ((node = node.parentNode) && (node.nodeType !== 9)) {
             ret.push(node);
             if (root) {
                 if (rootIsSelector) {
-                    if (matches(node,root)) {
+                    if (matches(node, root)) {
                         break;
                     }
                 } else if (node == root) {
                     break;
                 }
-            } 
+            }
 
         }
 
         if (selector) {
-            ret = local.filter(ret,selector);
+            ret = local.filter(ret, selector);
         }
         return ret;
     }
 
+    /*
+     * Returns a element by its ID.
+     * @param {string} id
+     */
     function byId(id, doc) {
         doc = doc || noder.doc();
         return doc.getElementById(id);
     }
 
+    /*
+     * Get the children of the specified element , optionally filtered by a selector.
+     * @param {string} node
+     * @param {String optionlly} selector
+     */
     function children(node, selector) {
         var childNodes = node.childNodes,
             ret = [];
@@ -4252,7 +4451,7 @@ define('skylark-utils/finder',[
             }
         }
         if (selector) {
-            ret = local.filter(ret,selector);
+            ret = local.filter(ret, selector);
         }
         return ret;
     }
@@ -4265,6 +4464,11 @@ define('skylark-utils/finder',[
         return node;
     }
 
+    /*
+     * Get the decendant of the specified element , optionally filtered by a selector.
+     * @param {HTMLElement} elm
+     * @param {String optionlly} selector
+     */
     function descendants(elm, selector) {
         // Selector
         try {
@@ -4275,6 +4479,11 @@ define('skylark-utils/finder',[
         return local.query(elm, selector);
     }
 
+    /*
+     * Get the nearest decendent of the specified element,optional matched by a selector.
+     * @param {HTMLElement} elm
+     * @param {String optionlly} selector
+     */
     function descendant(elm, selector) {
         // Selector
         try {
@@ -4290,19 +4499,29 @@ define('skylark-utils/finder',[
         }
     }
 
-    function find(elm,selector) {
+    /*
+     * Get the descendants of each element in the current set of matched elements, filtered by a selector, jQuery object, or element.
+     * @param {HTMLElement} elm
+     * @param {String optionlly} selector
+     */
+    function find(elm, selector) {
         if (!selector) {
             selector = elm;
             elm = document.body;
         }
-        if (matches(elm,selector)) {
+        if (matches(elm, selector)) {
             return elm;
         } else {
             return descendant(elm, selector);
         }
     }
 
-    function findAll(elm,selector) {
+    /*
+     * Get the findAll of the specified element , optionally filtered by a selector.
+     * @param {HTMLElement} elm
+     * @param {String optionlly} selector
+     */
+    function findAll(elm, selector) {
         if (!selector) {
             selector = elm;
             elm = document.body;
@@ -4310,6 +4529,12 @@ define('skylark-utils/finder',[
         return descendants(elm, selector);
     }
 
+    /*
+     * Get the first child of the specified element , optionally filtered by a selector.
+     * @param {HTMLElement} elm
+     * @param {String optionlly} selector
+     * @param {String} first
+     */
     function firstChild(elm, selector, first) {
         var childNodes = elm.childNodes,
             node = childNodes[0];
@@ -4328,6 +4553,12 @@ define('skylark-utils/finder',[
         return null;
     }
 
+    /*
+     * Get the last child of the specified element , optionally filtered by a selector.
+     * @param {HTMLElement} elm
+     * @param {String optionlly} selector
+     * @param {String } last
+     */
     function lastChild(elm, selector, last) {
         var childNodes = elm.childNodes,
             node = childNodes[childNodes.length - 1];
@@ -4346,6 +4577,11 @@ define('skylark-utils/finder',[
         return null;
     }
 
+    /*
+     * Check the specified element against a selector.
+     * @param {HTMLElement} elm
+     * @param {String optionlly} selector
+     */
     function matches(elm, selector) {
         if (!selector || !elm || elm.nodeType !== 1) {
             return false
@@ -4359,8 +4595,8 @@ define('skylark-utils/finder',[
             }
             return local.match(elm, selector);
         } else if (langx.isArrayLike(selector)) {
-            return langx.inArray(elm,selector) > -1;
-        } else if (langx.isPlainObject(selector)){    
+            return langx.inArray(elm, selector) > -1;
+        } else if (langx.isPlainObject(selector)) {
             return local.check(elm, selector);
         } else {
             return elm === selector;
@@ -4368,6 +4604,12 @@ define('skylark-utils/finder',[
 
     }
 
+    /*
+     * Get the nearest next sibing of the specitied element , optional matched by a selector.
+     * @param {HTMLElement} elm
+     * @param {String optionlly} selector
+     * @param {Boolean Optional} adjacent
+     */
     function nextSibling(elm, selector, adjacent) {
         var node = elm.nextSibling;
         while (node) {
@@ -4384,6 +4626,11 @@ define('skylark-utils/finder',[
         return null;
     }
 
+    /*
+     * Get the next siblings of the specified element , optional filtered by a selector.
+     * @param {HTMLElement} elm
+     * @param {String optionlly} selector
+     */
     function nextSiblings(elm, selector) {
         var node = elm.nextSibling,
             ret = [];
@@ -4398,7 +4645,11 @@ define('skylark-utils/finder',[
         return ret;
     }
 
-
+    /*
+     * Get the parent element of the specified element. if a selector is provided, it retrieves the parent element only if it matches that selector.
+     * @param {HTMLElement} elm
+     * @param {String optionlly} selector
+     */
     function parent(elm, selector) {
         var node = elm.parentNode;
         if (node && (!selector || matches(node, selector))) {
@@ -4408,6 +4659,12 @@ define('skylark-utils/finder',[
         return null;
     }
 
+    /*
+     * Get hte nearest previous sibling of the specified element ,optional matched by a selector.
+     * @param {HTMLElement} elm
+     * @param {String optionlly} selector
+     * @param {Boolean Optional } adjacent
+     */
     function previousSibling(elm, selector, adjacent) {
         var node = elm.previousSibling;
         while (node) {
@@ -4424,6 +4681,11 @@ define('skylark-utils/finder',[
         return null;
     }
 
+    /*
+     * Get all preceding siblings of each element in the set of matched elements, optionally filtered by a selector.
+     * @param {HTMLElement} elm
+     * @param {String optionlly} selector
+     */
     function previousSiblings(elm, selector) {
         var node = elm.previousSibling,
             ret = [];
@@ -4438,6 +4700,11 @@ define('skylark-utils/finder',[
         return ret;
     }
 
+    /*
+     * Selects all sibling elements that follow after the “prev” element, have the same parent, and match the filtering “siblings” selector.
+     * @param {HTMLElement} elm
+     * @param {String optionlly} selector
+     */
     function siblings(elm, selector) {
         var node = elm.parentNode.firstChild,
             ret = [];
@@ -4499,7 +4766,6 @@ define('skylark-utils/finder',[
 
     return skylark.finder = finder;
 });
-
 define('skylark-utils/datax',[
     "./skylark",
     "./langx",
@@ -4525,6 +4791,12 @@ define('skylark-utils/datax',[
             'frameborder': 'frameBorder',
             'contenteditable': 'contentEditable'
         };
+    /*
+     * Set property values
+     * @param {Object} elm  
+     * @param {String} name
+     * @param {String} value
+     */
 
     function setAttribute(elm, name, value) {
         if (value == null) {
@@ -4534,9 +4806,16 @@ define('skylark-utils/datax',[
         }
     }
 
-    function aria(elm,name,value) {
-        return this.attr(elm, "aria-"+name, value);
+    function aria(elm, name, value) {
+        return this.attr(elm, "aria-" + name, value);
     }
+
+    /*
+     * Set property values
+     * @param {Object} elm  
+     * @param {String} name
+     * @param {String} value
+     */
 
     function attr(elm, name, value) {
         if (value === undefined) {
@@ -4556,7 +4835,12 @@ define('skylark-utils/datax',[
         }
     }
 
-    // Read all "data-*" attributes from a node
+
+    /*
+     *  Read all "data-*" attributes from a node
+     * @param {Object} elm  
+     */
+
     function _attributeData(elm) {
         var store = {}
         langx.each(elm.attributes || [], function(i, attr) {
@@ -4601,6 +4885,12 @@ define('skylark-utils/datax',[
     }
 
 
+    /*
+     * xxx
+     * @param {Object} elm  
+     * @param {String} name
+     * @param {String} value
+     */
     function data(elm, name, value) {
 
         if (value === undefined) {
@@ -4616,7 +4906,11 @@ define('skylark-utils/datax',[
             _setData(elm, name, value);
             return this;
         }
-    }
+    } +
+    /*
+     * Remove from the element all items that have not yet been run. 
+     * @param {Object} elm  
+     */
 
     function cleanData(elm) {
         if (elm["_$_store"]) {
@@ -4624,6 +4918,11 @@ define('skylark-utils/datax',[
         }
     }
 
+    /*
+     * Remove a previously-stored piece of data. 
+     * @param {Object} elm  
+     * @param {Array} names
+     */
     function removeData(elm, names) {
         if (langx.isString(names)) {
             names = names.split(/\s+/);
@@ -4635,12 +4934,23 @@ define('skylark-utils/datax',[
         return this;
     }
 
+    /*
+     * xxx 
+     * @param {Object} elm  
+     * @param {Array} names
+     */
     function pluck(nodes, property) {
         return map.call(nodes, function(elm) {
             return elm[property];
         });
     }
 
+    /*
+     * Get or set the value of an property for the specified element.
+     * @param {Object} elm  
+     * @param {String} name
+     * @param {String} value
+     */
     function prop(elm, name, value) {
         name = propMap[name] || name;
         if (value === undefined) {
@@ -4651,6 +4961,11 @@ define('skylark-utils/datax',[
         }
     }
 
+    /*
+     * remove Attributes  
+     * @param {Object} elm  
+     * @param {String} name
+     */
     function removeAttr(elm, name) {
         name.split(' ').forEach(function(attr) {
             setAttribute(elm, attr);
@@ -4658,6 +4973,12 @@ define('skylark-utils/datax',[
         return this;
     }
 
+
+    /*
+     * Remove the value of a property for the first element in the set of matched elements or set one or more properties for every matched element.
+     * @param {Object} elm  
+     * @param {String} name
+     */
     function removeProp(elm, name) {
         name.split(' ').forEach(function(prop) {
             delete elm[prop];
@@ -4665,6 +4986,11 @@ define('skylark-utils/datax',[
         return this;
     }
 
+    /*   
+     * Get the combined text contents of each element in the set of matched elements, including their descendants, or set the text contents of the matched elements.  
+     * @param {Object} elm  
+     * @param {String} txt
+     */
     function text(elm, txt) {
         if (txt === undefined) {
             return elm.textContent;
@@ -4674,6 +5000,11 @@ define('skylark-utils/datax',[
         }
     }
 
+    /*   
+     * Get the current value of the first element in the set of matched elements or set the value of every matched element.
+     * @param {Object} elm  
+     * @param {String} value
+     */
     function val(elm, value) {
         if (value === undefined) {
             if (elm.multiple) {
@@ -4697,11 +5028,11 @@ define('skylark-utils/datax',[
 
     langx.mixin(datax, {
         aria: aria,
-        
+
         attr: attr,
 
-        cleanData : cleanData,
-        
+        cleanData: cleanData,
+
         data: data,
 
         pluck: pluck,
@@ -4721,7 +5052,6 @@ define('skylark-utils/datax',[
 
     return skylark.datax = datax;
 });
-
 define('skylark-utils/eventer',[
     "./skylark",
     "./langx",
@@ -4853,8 +5183,7 @@ define('skylark-utils/eventer',[
                 "unload": 14, // UIEvent,
 
                 "wheel": 15 // WheelEvent
-            }
-        ;
+            };
 
         function getEventCtor(type) {
             var idx = NativeEvents[type];
@@ -4894,7 +5223,7 @@ define('skylark-utils/eventer',[
         };
     })();
 
-    function createProxy(src,props) {
+    function createProxy(src, props) {
         var key,
             proxy = {
                 originalEvent: src
@@ -4905,7 +5234,7 @@ define('skylark-utils/eventer',[
             }
         }
         if (props) {
-            langx.mixin(proxy,props);
+            langx.mixin(proxy, props);
         }
         return compatible(proxy, src);
     }
@@ -4950,7 +5279,7 @@ define('skylark-utils/eventer',[
                             args = [e];
                         }
 
-                        langx.each(bindings,function(idx,binding) {
+                        langx.each(bindings, function(idx, binding) {
                             var match = elm;
                             if (e.isImmediatePropagationStopped && e.isImmediatePropagationStopped()) {
                                 return false;
@@ -4961,8 +5290,8 @@ define('skylark-utils/eventer',[
                                 one = options.one,
                                 data = options.data;
 
-                            if (ns && ns != options.ns && options.ns.indexOf(ns)===-1) {
-                                return ;
+                            if (ns && ns != options.ns && options.ns.indexOf(ns) === -1) {
+                                return;
                             }
                             if (selector) {
                                 match = finder.closest(e.target, selector);
@@ -4972,7 +5301,7 @@ define('skylark-utils/eventer',[
                                         liveFired: elm
                                     });
                                 } else {
-                                    return ;
+                                    return;
                                 }
                             }
 
@@ -4982,7 +5311,7 @@ define('skylark-utils/eventer',[
                                 if (related && (related === match || noder.contains(match, related))) {
                                     return;
                                 }
-                            }                           
+                            }
 
                             if (langx.isDefined(data)) {
                                 e.data = data;
@@ -5002,17 +5331,17 @@ define('skylark-utils/eventer',[
                     };
 
                     var event = self._event;
-/*
-                    if (event in hover) {
-                        var l = self._listener;
-                        self._listener = function(e) {
-                            var related = e.relatedTarget;
-                            if (!related || (related !== this && !noder.contains(this, related))) {
-                                return l.apply(this, arguments);
-                            }
-                        }
-                    }
-*/
+                    /*
+                                        if (event in hover) {
+                                            var l = self._listener;
+                                            self._listener = function(e) {
+                                                var related = e.relatedTarget;
+                                                if (!related || (related !== this && !noder.contains(this, related))) {
+                                                    return l.apply(this, arguments);
+                                                }
+                                            }
+                                        }
+                    */
 
                     if (self._target.addEventListener) {
                         self._target.addEventListener(realEvent(event), self._listener, false);
@@ -5112,6 +5441,13 @@ define('skylark-utils/eventer',[
             return handler;
         };
 
+    /*   
+     * Remove an event handler for one or more events from the specified element.
+     * @param {HTMLElement} elm  
+     * @param {String} events
+     * @param {String　Optional } selector
+     * @param {Function} callback
+     */
     function off(elm, events, selector, callback) {
         var $this = this
         if (langx.isPlainObject(events)) {
@@ -5149,6 +5485,15 @@ define('skylark-utils/eventer',[
         return this;
     }
 
+    /*   
+     * Attach an event handler function for one or more events to the selected elements.
+     * @param {HTMLElement} elm  
+     * @param {String} events
+     * @param {String　Optional} selector
+     * @param {Anything Optional} data
+     * @param {Function} callback
+     * @param {Boolean　Optional} one
+     */
     function on(elm, events, selector, data, callback, one) {
 
         var autoRemove, delegator;
@@ -5197,12 +5542,24 @@ define('skylark-utils/eventer',[
         return this;
     }
 
+    /*   
+     * Attach a handler to an event for the elements. The handler is executed at most once per 
+     * @param {HTMLElement} elm  
+     * @param {String} event
+     * @param {String　Optional} selector
+     * @param {Anything Optional} data
+     * @param {Function} callback
+     */
     function one(elm, events, selector, data, callback) {
         on(elm, events, selector, data, callback, 1);
 
         return this;
     }
 
+    /*   
+     * Prevents propagation and clobbers the default action of the passed event. The same as calling event.preventDefault() and event.stopPropagation(). 
+     * @param {String} event
+     */
     function stop(event) {
         if (window.document.all) {
             event.keyCode = 0;
@@ -5213,7 +5570,12 @@ define('skylark-utils/eventer',[
         }
         return this;
     }
-
+    /*   
+     * Execute all handlers and behaviors attached to the matched elements for the given event  
+     * @param {String} evented
+     * @param {String} type
+     * @param {Array or PlainObject } args
+     */
     function trigger(evented, type, args) {
         var e;
         if (type instanceof Event) {
@@ -5232,7 +5594,10 @@ define('skylark-utils/eventer',[
 
         return this;
     }
-
+    /*   
+     * Specify a function to execute when the DOM is fully loaded.  
+     * @param {Function} callback
+     */
     function ready(callback) {
         // need to check if document.body exists for IE as that browser reports
         // document ready when it hasn't yet created the body elm
@@ -5261,7 +5626,7 @@ define('skylark-utils/eventer',[
         "right": 39,
         "space": 32,
         "tab": 9,
-        "up": 38        
+        "up": 38
     };
     //example:
     //shortcuts(elm).add("CTRL+ALT+SHIFT+X",function(){console.log("test!")});
@@ -5336,7 +5701,7 @@ define('skylark-utils/eventer',[
     langx.mixin(eventer, {
         create: createEvent,
 
-        keys : keyCodeLookup,
+        keys: keyCodeLookup,
 
         off: off,
 
@@ -5350,7 +5715,7 @@ define('skylark-utils/eventer',[
 
         shortcuts: shortcuts,
 
-        special : specialEvents,
+        special: specialEvents,
 
         stop: stop,
 
@@ -5360,50 +5725,51 @@ define('skylark-utils/eventer',[
 
     return skylark.eventer = eventer;
 });
-
 define('skylark-utils/geom',[
     "./skylark",
     "./langx",
     "./noder",
     "./styler"
-], function(skylark, langx, noder,styler) {
+], function(skylark, langx, noder, styler) {
     var rootNodeRE = /^(?:body|html)$/i,
         px = langx.toPixel,
         offsetParent = noder.offsetParent,
         cachedScrollbarWidth;
 
-
     function scrollbarWidth() {
-        if ( cachedScrollbarWidth !== undefined ) {
+        if (cachedScrollbarWidth !== undefined) {
             return cachedScrollbarWidth;
         }
         var w1, w2,
-            div = noder.createFragment( "<div style=" +
+            div = noder.createFragment("<div style=" +
                 "'display:block;position:absolute;width:200px;height:200px;overflow:hidden;'>" +
-                "<div style='height:300px;width:auto;'></div></div>" )[0],
+                "<div style='height:300px;width:auto;'></div></div>")[0],
             innerDiv = div.childNodes[0];
 
-        noder.append(document.body,div);
+        noder.append(document.body, div);
 
         w1 = innerDiv.offsetWidth;
-        
-        styler.css( div, "overflow", "scroll" );
+
+        styler.css(div, "overflow", "scroll");
 
         w2 = innerDiv.offsetWidth;
 
-        if ( w1 === w2 ) {
+        if (w1 === w2) {
             w2 = div[0].clientWidth;
         }
 
         noder.remove(div);
 
-        return ( cachedScrollbarWidth = w1 - w2 );
+        return (cachedScrollbarWidth = w1 - w2);
     }
-
+    /*
+     * Get the widths of each border of the specified element.
+     * @param {HTMLElement} elm
+     */
     function borderExtents(elm) {
         var s = getComputedStyle(elm);
         return {
-            left: px(s.borderLeftWidth , elm),
+            left: px(s.borderLeftWidth, elm),
             top: px(s.borderTopWidth, elm),
             right: px(s.borderRightWidth, elm),
             bottom: px(s.borderBottomWidth, elm)
@@ -5411,6 +5777,11 @@ define('skylark-utils/geom',[
     }
 
     //viewport coordinate
+    /*
+     * Get or set the viewport position of the specified element border box.
+     * @param {HTMLElement} elm
+     * @param {PlainObject} coords
+     */
     function boundingPosition(elm, coords) {
         if (coords === undefined) {
             return rootNodeRE.test(elm.nodeName) ? { top: 0, left: 0 } : elm.getBoundingClientRect();
@@ -5430,6 +5801,11 @@ define('skylark-utils/geom',[
         }
     }
 
+    /*
+     * Get or set the viewport rect of the specified element border box.
+     * @param {HTMLElement} elm
+     * @param {PlainObject} coords
+     */
     function boundingRect(elm, coords) {
         if (coords === undefined) {
             return elm.getBoundingClientRect()
@@ -5440,6 +5816,11 @@ define('skylark-utils/geom',[
         }
     }
 
+    /*
+     * Get or set the height of the specified element client box.
+     * @param {HTMLElement} elm
+     * @param {Number} value
+     */
     function clientHeight(elm, value) {
         if (value == undefined) {
             return clientSize(elm).height;
@@ -5450,6 +5831,11 @@ define('skylark-utils/geom',[
         }
     }
 
+    /*
+     * Get or set the size of the specified element client box.
+     * @param {HTMLElement} elm
+     * @param {PlainObject} dimension
+     */
     function clientSize(elm, dimension) {
         if (dimension == undefined) {
             return {
@@ -5493,6 +5879,11 @@ define('skylark-utils/geom',[
         };
     }
 
+    /*
+     * Get or set the width of the specified element client box.
+     * @param {HTMLElement} elm
+     * @param {PlainObject} dimension
+     */
     function clientWidth(elm, value) {
         if (value == undefined) {
             return clientSize(elm).width;
@@ -5504,6 +5895,10 @@ define('skylark-utils/geom',[
         }
     }
 
+    /*
+     * Get the rect of the specified element content box.
+     * @param {HTMLElement} elm
+     */
     function contentRect(elm) {
         var cs = clientSize(elm),
             pex = paddingExtents(elm);
@@ -5522,6 +5917,10 @@ define('skylark-utils/geom',[
         };
     }
 
+    /*
+     * Get the document size.
+     * @param {HTMLDocument} doc
+     */
     function getDocumentSize(doc) {
         var documentElement = doc.documentElement,
             body = doc.body,
@@ -5539,6 +5938,11 @@ define('skylark-utils/geom',[
         };
     }
 
+    /*
+     * Get the document size.
+     * @param {HTMLElement} elm
+     * @param {Number} value
+     */
     function height(elm, value) {
         if (value == undefined) {
             return size(elm).height;
@@ -5550,6 +5954,10 @@ define('skylark-utils/geom',[
         }
     }
 
+    /*
+     * Get the widths of each margin of the specified element.
+     * @param {HTMLElement} elm
+     */
     function marginExtents(elm) {
         var s = getComputedStyle(elm);
         return {
@@ -5560,16 +5968,17 @@ define('skylark-utils/geom',[
         }
     }
 
+
     function marginRect(elm) {
         var obj = this.relativeRect(elm),
             me = this.marginExtents(elm);
 
         return {
-                left: obj.left,
-                top: obj.top,
-                width: obj.width + me.left + me.right,
-                height: obj.height + me.top + me.bottom
-            };
+            left: obj.left,
+            top: obj.top,
+            width: obj.width + me.left + me.right,
+            height: obj.height + me.top + me.bottom
+        };
     }
 
 
@@ -5578,11 +5987,15 @@ define('skylark-utils/geom',[
             me = this.marginExtents(elm);
 
         return {
-                width: obj.width + me.left + me.right,
-                height: obj.height + me.top + me.bottom
-            };
+            width: obj.width + me.left + me.right,
+            height: obj.height + me.top + me.bottom
+        };
     }
 
+    /*
+     * Get the widths of each padding of the specified element.
+     * @param {HTMLElement} elm
+     */
     function paddingExtents(elm) {
         var s = getComputedStyle(elm);
         return {
@@ -5593,6 +6006,11 @@ define('skylark-utils/geom',[
         }
     }
 
+    /*
+     * Get or set the document position of the specified element border box.
+     * @param {HTMLElement} elm
+     * @param {PlainObject} coords
+     */
     //coordinate to the document
     function pagePosition(elm, coords) {
         if (coords === undefined) {
@@ -5617,6 +6035,11 @@ define('skylark-utils/geom',[
         }
     }
 
+    /*
+     * Get or set the document rect of the specified element border box.
+     * @param {HTMLElement} elm
+     * @param {PlainObject} coords
+     */
     function pageRect(elm, coords) {
         if (coords === undefined) {
             var obj = elm.getBoundingClientRect()
@@ -5633,6 +6056,11 @@ define('skylark-utils/geom',[
         }
     }
 
+    /*
+     * Get or set the position of the specified element border box , relative to parent element.
+     * @param {HTMLElement} elm
+     * @param {PlainObject} coords
+     */
     // coordinate relative to it's parent
     function relativePosition(elm, coords) {
         if (coords == undefined) {
@@ -5646,8 +6074,8 @@ define('skylark-utils/geom',[
 
             // Subtract parent offsets and element margins
             return {
-                top: offset.top - parentOffset.top - pbex.top,// - mex.top,
-                left: offset.left - parentOffset.left - pbex.left,// - mex.left
+                top: offset.top - parentOffset.top - pbex.top, // - mex.top,
+                left: offset.left - parentOffset.left - pbex.left, // - mex.left
             }
         } else {
             var props = {
@@ -5663,6 +6091,11 @@ define('skylark-utils/geom',[
         }
     }
 
+    /*
+     * Get or set the rect of the specified element border box , relatived to parent element.
+     * @param {HTMLElement} elm
+     * @param {PlainObject} coords
+     */
     function relativeRect(elm, coords) {
         if (coords === undefined) {
             var // Get *real* offsetParent
@@ -5686,7 +6119,11 @@ define('skylark-utils/geom',[
             return this;
         }
     }
-
+    /*
+     * Scroll the specified element into view.
+     * @param {HTMLElement} elm
+     * @param {} align
+     */
     function scrollIntoView(elm, align) {
         function getOffset(elm, rootElm) {
             var x, y, parent = elm;
@@ -5725,7 +6162,11 @@ define('skylark-utils/geom',[
 
         return this;
     }
-
+    /*
+     * Get or set the current horizontal position of the scroll bar for the specified element.
+     * @param {HTMLElement} elm
+     * @param {Number} value
+     */
     function scrollLeft(elm, value) {
         var hasScrollLeft = "scrollLeft" in elm;
         if (value === undefined) {
@@ -5739,7 +6180,11 @@ define('skylark-utils/geom',[
             return this;
         }
     }
-
+    /*
+     * Get or the current vertical position of the scroll bar for the specified element.
+     * @param {HTMLElement} elm
+     * @param {Number} value
+     */
     function scrollTop(elm, value) {
         var hasScrollTop = "scrollTop" in elm;
 
@@ -5754,7 +6199,11 @@ define('skylark-utils/geom',[
             return this;
         }
     }
-
+    /*
+     * Get or set the size of the specified element border box.
+     * @param {HTMLElement} elm
+     * @param {PlainObject}dimension
+     */
     function size(elm, dimension) {
         if (dimension == undefined) {
             if (langx.isWindow(elm)) {
@@ -5793,7 +6242,11 @@ define('skylark-utils/geom',[
             return this;
         }
     }
-
+    /*
+     * Get or set the size of the specified element border box.
+     * @param {HTMLElement} elm
+     * @param {Number} value
+     */
     function width(elm, value) {
         if (value == undefined) {
             return size(elm).width;
@@ -5830,9 +6283,9 @@ define('skylark-utils/geom',[
 
         marginExtents: marginExtents,
 
-        marginRect : marginRect,
+        marginRect: marginRect,
 
-        marginSize : marginSize,
+        marginSize: marginSize,
 
         offsetParent: offsetParent,
 
@@ -5848,7 +6301,7 @@ define('skylark-utils/geom',[
 
         relativeRect: relativeRect,
 
-        scrollbarWidth : scrollbarWidth,
+        scrollbarWidth: scrollbarWidth,
 
         scrollIntoView: scrollIntoView,
 
@@ -5863,7 +6316,6 @@ define('skylark-utils/geom',[
 
     return skylark.geom = geom;
 });
-
 define('skylark-utils/fx',[
     "./skylark",
     "./langx",
@@ -5901,6 +6353,15 @@ define('skylark-utils/fx',[
 
 
 
+    /*   
+     * Perform a custom animation of a set of CSS properties.
+     * @param {Object} elm  
+     * @param {Number or String} properties
+     * @param {String} ease
+     * @param {Number or String} duration
+     * @param {Function} callback
+     * @param {Number or String} delay
+     */
     function animate(elm, properties, duration, ease, callback, delay) {
         var key,
             cssValues = {},
@@ -6024,6 +6485,12 @@ define('skylark-utils/fx',[
         return this;
     }
 
+    /*   
+     * Display the matched elements.
+     * @param {Object} elm  
+     * @param {String} speed
+     * @param {Function} callback
+     */
     function show(elm, speed, callback) {
         styler.show(elm);
         if (speed) {
@@ -6038,6 +6505,12 @@ define('skylark-utils/fx',[
     }
 
 
+    /*   
+     * Hide the matched elements.
+     * @param {Object} elm  
+     * @param {String} speed
+     * @param {Function} callback
+     */
     function hide(elm, speed, callback) {
         if (speed) {
             if (!callback && langx.isFunction(speed)) {
@@ -6056,6 +6529,13 @@ define('skylark-utils/fx',[
         return this;
     }
 
+    /*   
+     * Get the current vertical position of the scroll bar for the first element in the set of matched elements or set the vertical position of the scroll bar for every matched element.
+     * @param {Object} elm  
+     * @param {Number or String} pos
+     * @param {Number or String} speed
+     * @param {Function} callback
+     */
     function scrollToTop(elm, pos, speed, callback) {
         var scrollFrom = parseInt(elm.scrollTop),
             i = 0,
@@ -6075,6 +6555,12 @@ define('skylark-utils/fx',[
         }, runEvery);
     }
 
+    /*   
+     * Display or hide the matched elements.
+     * @param {Object} elm  
+     * @param {Number or String} speed
+     * @param {Function} callback
+     */
     function toggle(elm, speed, callback) {
         if (styler.isInvisible(elm)) {
             show(elm, speed, callback);
@@ -6084,11 +6570,27 @@ define('skylark-utils/fx',[
         return this;
     }
 
+    /*   
+     * Adjust the opacity of the matched elements.
+     * @param {Object} elm  
+     * @param {Number or String} speed
+     * @param {Number or String} opacity
+     * @param {String} easing
+     * @param {Function} callback
+     */
     function fadeTo(elm, speed, opacity, easing, callback) {
         animate(elm, { opacity: opacity }, speed, easing, callback);
         return this;
     }
 
+
+    /*   
+     * Display the matched elements by fading them to opaque.
+     * @param {Object} elm  
+     * @param {Number or String} speed
+     * @param {String} easing
+     * @param {Function} callback
+     */
     function fadeIn(elm, speed, easing, callback) {
         var target = styler.css(elm, "opacity");
         if (target > 0) {
@@ -6103,6 +6605,13 @@ define('skylark-utils/fx',[
         return this;
     }
 
+    /*   
+     * Hide the matched elements by fading them to transparent.
+     * @param {Object} elm  
+     * @param {Number or String} speed
+     * @param {String} easing
+     * @param {Function} callback
+     */
     function fadeOut(elm, speed, easing, callback) {
         var _elm = elm,
             complete,
@@ -6133,6 +6642,13 @@ define('skylark-utils/fx',[
         return this;
     }
 
+    /*   
+     * Display or hide the matched elements by animating their opacity.
+     * @param {Object} elm  
+     * @param {Number or String} speed
+     * @param {String} ceasing
+     * @param {Function} callback
+     */
     function fadeToggle(elm, speed, ceasing, allback) {
         if (styler.isInvisible(elm)) {
             fadeIn(elm, speed, easing, callback);
@@ -6142,29 +6658,35 @@ define('skylark-utils/fx',[
         return this;
     }
 
-    function slideDown(elm,duration,callback) {    
-    
+    /*   
+     * Display the matched elements with a sliding motion.
+     * @param {Object} elm  
+     * @param {Number or String} duration
+     * @param {Function} callback
+     */
+    function slideDown(elm, duration, callback) {
+
         // get the element position to restore it then
-        var position = styler.css(elm,'position');
-        
+        var position = styler.css(elm, 'position');
+
         // show element if it is hidden
         show(elm);
-        
+
         // place it so it displays as usually but hidden
-        styler.css(elm,{
+        styler.css(elm, {
             position: 'absolute',
             visibility: 'hidden'
         });
-        
+
         // get naturally height, margin, padding
-        var marginTop = styler.css(elm,'margin-top');
-        var marginBottom = styler.css(elm,'margin-bottom');
-        var paddingTop = styler.css(elm,'padding-top');
-        var paddingBottom = styler.css(elm,'padding-bottom');
-        var height = styler.css(elm,'height');
-        
+        var marginTop = styler.css(elm, 'margin-top');
+        var marginBottom = styler.css(elm, 'margin-bottom');
+        var paddingTop = styler.css(elm, 'padding-top');
+        var paddingBottom = styler.css(elm, 'padding-bottom');
+        var height = styler.css(elm, 'height');
+
         // set initial css for animation
-        styler.css(elm,{
+        styler.css(elm, {
             position: position,
             visibility: 'visible',
             overflow: 'hidden',
@@ -6174,43 +6696,48 @@ define('skylark-utils/fx',[
             paddingTop: 0,
             paddingBottom: 0
         });
-        
+
         // animate to gotten height, margin and padding
-        animate(elm,{
+        animate(elm, {
             height: height,
             marginTop: marginTop,
             marginBottom: marginBottom,
             paddingTop: paddingTop,
             paddingBottom: paddingBottom
         }, {
-            duration : duration,
-            complete: function(){
+            duration: duration,
+            complete: function() {
                 if (callback) {
-                    callback.apply(elm); 
+                    callback.apply(elm);
                 }
-            }    
-        }
-    );
-        
+            }
+        });
+
         return this;
     };
 
-    function slideUp(elm,duration,callback) {
+    /*   
+     * Hide the matched elements with a sliding motion.
+     * @param {Object} elm  
+     * @param {Number or String} duration
+     * @param {Function} callback
+     */
+    function slideUp(elm, duration, callback) {
         // active the function only if the element is visible
         if (geom.height(elm) > 0) {
-                   
+
             // get the element position to restore it then
-            var position = styler.css(elm,'position');
-            
+            var position = styler.css(elm, 'position');
+
             // get the element height, margin and padding to restore them then
-            var height = styler.css(elm,'height');
-            var marginTop = styler.css(elm,'margin-top');
-            var marginBottom = styler.css(elm,'margin-bottom');
-            var paddingTop = styler.css(elm,'padding-top');
-            var paddingBottom = styler.css(elm,'padding-bottom');
-            
+            var height = styler.css(elm, 'height');
+            var marginTop = styler.css(elm, 'margin-top');
+            var marginBottom = styler.css(elm, 'margin-bottom');
+            var paddingTop = styler.css(elm, 'padding-top');
+            var paddingBottom = styler.css(elm, 'padding-bottom');
+
             // set initial css for animation
-            styler.css(elm,{
+            styler.css(elm, {
                 visibility: 'visible',
                 overflow: 'hidden',
                 height: height,
@@ -6219,21 +6746,21 @@ define('skylark-utils/fx',[
                 paddingTop: paddingTop,
                 paddingBottom: paddingBottom
             });
-            
+
             // animate element height, margin and padding to zero
-            animate(elm,{
+            animate(elm, {
                 height: 0,
                 marginTop: 0,
                 marginBottom: 0,
                 paddingTop: 0,
                 paddingBottom: 0
-            }, { 
+            }, {
                 // callback : restore the element position, height, margin and padding to original values
                 duration: duration,
                 queue: false,
-                complete: function(){
+                complete: function() {
                     hide(elm);
-                    styler.css(elm,{
+                    styler.css(elm, {
                         visibility: 'visible',
                         overflow: 'hidden',
                         height: height,
@@ -6243,24 +6770,30 @@ define('skylark-utils/fx',[
                         paddingBottom: paddingBottom
                     });
                     if (callback) {
-                        callback.apply(elm); 
+                        callback.apply(elm);
                     }
                 }
             });
         }
         return this;
     };
-    
-    /* SlideToggle */
-    function slideToggle(elm,duration,callback) {
-    
+
+
+    /*   
+     * Display or hide the matched elements with a sliding motion.
+     * @param {Object} elm  
+     * @param {Number or String} duration
+     * @param {Function} callback
+     */
+    function slideToggle(elm, duration, callback) {
+
         // if the element is hidden, slideDown !
         if (geom.height(elm) == 0) {
-            slideDown(elm,duration,callback);
-        } 
+            slideDown(elm, duration, callback);
+        }
         // if the element is visible, slideUp !
         else {
-            slideUp(elm,duration,callback);
+            slideUp(elm, duration, callback);
         }
         return this;
     };
@@ -6287,9 +6820,9 @@ define('skylark-utils/fx',[
         hide: hide,
         scrollToTop: scrollToTop,
 
-        slideDown : slideDown,
-        slideToggle : slideToggle,
-        slideUp : slideUp,
+        slideDown: slideDown,
+        slideToggle: slideToggle,
+        slideUp: slideUp,
         show: show,
         toggle: toggle
     });
@@ -6649,7 +7182,7 @@ define('skylark-utils/query',[
                         });
                     } else if (langx.isArrayLike(selector)) {
                        return some.call(self,function(elem) {
-                            return langx.inArray(elem, selector);
+                            return langx.inArray(elem, selector) > -1;
                         });
                     } else if (langx.isHtmlNode(selector)) {
                        return some.call(self,function(elem) {
@@ -8219,7 +8752,7 @@ define('skylark-utils/dnd',[
     "./geom",
     "./eventer",
     "./styler"
-],function(skylark, langx,noder,datax,finder,geom,eventer,styler){
+], function(skylark, langx, noder, datax, finder, geom, eventer, styler) {
     var on = eventer.on,
         off = eventer.off,
         attr = datax.attr,
@@ -8230,97 +8763,95 @@ define('skylark-utils/dnd',[
 
 
     var DndManager = langx.Evented.inherit({
-      klassName : "DndManager",
+        klassName: "DndManager",
 
-      init : function() {
+        init: function() {
 
-      },
+        },
 
-      prepare : function(draggable) {
-          var e = eventer.create("preparing",{
-             dragSource : draggable.dragSource,
-             dragHandle : draggable.dragHandle
-          });
-          draggable.trigger(e);
-          draggable.dragSource = e.dragSource;
-      },
-
-      start : function(draggable,event) {
-
-        var p = geom.pagePosition(draggable.dragSource);
-        this.draggingOffsetX = parseInt(event.pageX - p.left);
-        this.draggingOffsetY = parseInt(event.pageY - p.top)
-
-        var e = eventer.create("started",{
-          elm : draggable.elm,
-          dragSource : draggable.dragSource,
-          dragHandle : draggable.dragHandle,
-          ghost : null,
-
-          transfer : {
-          }
-        });
-
-        draggable.trigger(e);
-
-
-        this.dragging = draggable;
-
-        if (draggable.draggingClass) {
-          styler.addClass(draggable.dragSource,draggable.draggingClass);
-        }
-
-        this.draggingGhost = e.ghost;
-        if (!this.draggingGhost) {
-          this.draggingGhost = draggable.elm;
-        }
-
-        this.draggingTransfer = e.transfer;
-        if (this.draggingTransfer) {
-
-            langx.each(this.draggingTransfer,function(key,value){
-                event.dataTransfer.setData(key, value);
+        prepare: function(draggable) {
+            var e = eventer.create("preparing", {
+                dragSource: draggable.dragSource,
+                dragHandle: draggable.dragHandle
             });
+            draggable.trigger(e);
+            draggable.dragSource = e.dragSource;
+        },
+
+        start: function(draggable, event) {
+
+            var p = geom.pagePosition(draggable.dragSource);
+            this.draggingOffsetX = parseInt(event.pageX - p.left);
+            this.draggingOffsetY = parseInt(event.pageY - p.top)
+
+            var e = eventer.create("started", {
+                elm: draggable.elm,
+                dragSource: draggable.dragSource,
+                dragHandle: draggable.dragHandle,
+                ghost: null,
+
+                transfer: {}
+            });
+
+            draggable.trigger(e);
+
+
+            this.dragging = draggable;
+
+            if (draggable.draggingClass) {
+                styler.addClass(draggable.dragSource, draggable.draggingClass);
+            }
+
+            this.draggingGhost = e.ghost;
+            if (!this.draggingGhost) {
+                this.draggingGhost = draggable.elm;
+            }
+
+            this.draggingTransfer = e.transfer;
+            if (this.draggingTransfer) {
+
+                langx.each(this.draggingTransfer, function(key, value) {
+                    event.dataTransfer.setData(key, value);
+                });
+            }
+
+            event.dataTransfer.setDragImage(this.draggingGhost, this.draggingOffsetX, this.draggingOffsetY);
+
+            event.dataTransfer.effectAllowed = "copyMove";
+
+            var e1 = eventer.create("dndStarted", {
+                elm: e.elm,
+                dragSource: e.dragSource,
+                dragHandle: e.dragHandle,
+                ghost: e.ghost,
+                transfer: e.transfer
+            });
+
+            this.trigger(e1);
+        },
+
+        over: function() {
+
+        },
+
+        end: function(dropped) {
+            var dragging = this.dragging;
+            if (dragging) {
+                if (dragging.draggingClass) {
+                    styler.removeClass(dragging.dragSource, dragging.draggingClass);
+                }
+            }
+
+            var e = eventer.create("dndEnded", {});
+            this.trigger(e);
+
+
+            this.dragging = null;
+            this.draggingTransfer = null;
+            this.draggingGhost = null;
+            this.draggingOffsetX = null;
+            this.draggingOffsetY = null;
         }
-        
-        event.dataTransfer.setDragImage(this.draggingGhost, this.draggingOffsetX, this.draggingOffsetY);
-
-        event.dataTransfer.effectAllowed = "copyMove";
-
-        var e1 = eventer.create("dndStarted",{
-          elm : e.elm,
-          dragSource : e.dragSource,
-          dragHandle : e.dragHandle,
-          ghost : e.ghost,
-          transfer : e.transfer
-        });
-
-        this.trigger(e1);
-      },
-
-      over : function() {
-
-      },
-
-      end : function(dropped) {
-        var dragging = this.dragging;
-        if (dragging) {
-          if (dragging.draggingClass) {
-            styler.removeClass(dragging.dragSource,dragging.draggingClass);
-          }
-        }
-
-        var e = eventer.create("dndEnded",{
-        });        
-        this.trigger(e);
-
-
-        this.dragging = null;
-        this.draggingTransfer = null;
-        this.draggingGhost = null;
-        this.draggingOffsetX = null;
-        this.draggingOffsetY = null;
-      }
     });
 
     var manager = new DndManager(),
@@ -8330,226 +8861,237 @@ define('skylark-utils/dnd',[
 
 
     var Draggable = langx.Evented.inherit({
-      klassName : "Draggable",
+        klassName: "Draggable",
 
-      init : function (elm,params) {
-        var self = this;
+        init: function(elm, params) {
+            var self = this;
 
-        self.elm = elm;
-        self.draggingClass = params.draggingClass || "dragging",
-        self.params = langx.clone(params);
+            self.elm = elm;
+            self.draggingClass = params.draggingClass || "dragging",
+                self.params = langx.clone(params);
 
-        ["preparing","started", "ended", "moving"].forEach(function(eventName) {
-            if (langx.isFunction(params[eventName])) {
-                self.on(eventName, params[eventName]);
-            }
-        });
+            ["preparing", "started", "ended", "moving"].forEach(function(eventName) {
+                if (langx.isFunction(params[eventName])) {
+                    self.on(eventName, params[eventName]);
+                }
+            });
 
 
-        eventer.on(elm,{
-          "mousedown" : function(e) {
-            var params = self.params;
-            if (params.handle) {
-              self.dragHandle = finder.closest(e.target,params.handle);
-              if (!self.dragHandle) {
-                return;
-              }
-            }
-            if (params.source) {
-                self.dragSource = finder.closest(e.target,params.source);
-            } else {
-                self.dragSource = self.elm;
-            }
-            manager.prepare(self);
-            if (self.dragSource) {
-              datax.attr(self.dragSource, "draggable", 'true');
-            } 
-          },
+            eventer.on(elm, {
+                "mousedown": function(e) {
+                    var params = self.params;
+                    if (params.handle) {
+                        self.dragHandle = finder.closest(e.target, params.handle);
+                        if (!self.dragHandle) {
+                            return;
+                        }
+                    }
+                    if (params.source) {
+                        self.dragSource = finder.closest(e.target, params.source);
+                    } else {
+                        self.dragSource = self.elm;
+                    }
+                    manager.prepare(self);
+                    if (self.dragSource) {
+                        datax.attr(self.dragSource, "draggable", 'true');
+                    }
+                },
 
-          "mouseup" :   function(e) {
-            if (self.dragSource) {
-              //datax.attr(self.dragSource, "draggable", 'false');
-              self.dragSource = null;
-              self.dragHandle = null;
-            }
-          },
+                "mouseup": function(e) {
+                    if (self.dragSource) {
+                        //datax.attr(self.dragSource, "draggable", 'false');
+                        self.dragSource = null;
+                        self.dragHandle = null;
+                    }
+                },
 
-          "dragstart":  function(e) {
-            datax.attr(self.dragSource, "draggable", 'false');
-            manager.start(self, e);
-          },
+                "dragstart": function(e) {
+                    datax.attr(self.dragSource, "draggable", 'false');
+                    manager.start(self, e);
+                },
 
-          "dragend":   function(e){
-            eventer.stop(e);
+                "dragend": function(e) {
+                    eventer.stop(e);
 
-            if (!manager.dragging) {
-              return;
-            }
+                    if (!manager.dragging) {
+                        return;
+                    }
 
-            manager.end(false);
-          }
-        });
+                    manager.end(false);
+                }
+            });
 
-      }
+        }
 
     });
 
 
     var Droppable = langx.Evented.inherit({
-      klassName : "Droppable",
+        klassName: "Droppable",
 
-      init : function(elm,params) {
-        var self = this,
-            draggingClass = params.draggingClass || "dragging",
-            hoverClass,
-            activeClass,
-            acceptable = true;
+        init: function(elm, params) {
+            var self = this,
+                draggingClass = params.draggingClass || "dragging",
+                hoverClass,
+                activeClass,
+                acceptable = true;
 
-        self.elm = elm;
-        self._params = params;
+            self.elm = elm;
+            self._params = params;
 
-        ["started","entered", "leaved", "dropped","overing"].forEach(function(eventName) {
-            if (langx.isFunction(params[eventName])) {
-                self.on(eventName, params[eventName]);
-            }
-        });
-
-        eventer.on(elm,{
-          "dragover" : function(e) {
-            e.stopPropagation()
-
-            if (!acceptable) {
-              return
-            }
-
-            var e2 = eventer.create("overing",{
-                overElm : e.target,
-                transfer : manager.draggingTransfer,
-                acceptable : true
-            });
-            self.trigger(e2);
-
-            if (e2.acceptable) {
-              e.preventDefault() // allow drop
-
-              e.dataTransfer.dropEffect = "copyMove";
-            }
-
-          },
-
-          "dragenter" :   function(e) {
-            var params = self._params,
-                elm = self.elm;
-
-            var e2 = eventer.create("entered",{
-                transfer : manager.draggingTransfer
+            ["started", "entered", "leaved", "dropped", "overing"].forEach(function(eventName) {
+                if (langx.isFunction(params[eventName])) {
+                    self.on(eventName, params[eventName]);
+                }
             });
 
-            self.trigger(e2);
+            eventer.on(elm, {
+                "dragover": function(e) {
+                    e.stopPropagation()
 
-            e.stopPropagation()
+                    if (!acceptable) {
+                        return
+                    }
 
-            if (hoverClass && acceptable) {
-              styler.addClass(elm,hoverClass)
-            }
-          },
+                    var e2 = eventer.create("overing", {
+                        overElm: e.target,
+                        transfer: manager.draggingTransfer,
+                        acceptable: true
+                    });
+                    self.trigger(e2);
 
-          "dragleave":  function(e) {
-            var params = self._params,
-                elm = self.elm;
-            if (!acceptable) return false
-            
-            var e2 = eventer.create("leaved",{
-                transfer : manager.draggingTransfer
+                    if (e2.acceptable) {
+                        e.preventDefault() // allow drop
+
+                        e.dataTransfer.dropEffect = "copyMove";
+                    }
+
+                },
+
+                "dragenter": function(e) {
+                    var params = self._params,
+                        elm = self.elm;
+
+                    var e2 = eventer.create("entered", {
+                        transfer: manager.draggingTransfer
+                    });
+
+                    self.trigger(e2);
+
+                    e.stopPropagation()
+
+                    if (hoverClass && acceptable) {
+                        styler.addClass(elm, hoverClass)
+                    }
+                },
+
+                "dragleave": function(e) {
+                    var params = self._params,
+                        elm = self.elm;
+                    if (!acceptable) return false
+
+                    var e2 = eventer.create("leaved", {
+                        transfer: manager.draggingTransfer
+                    });
+
+                    self.trigger(e2);
+
+                    e.stopPropagation()
+
+                    if (hoverClass && acceptable) {
+                        styler.removeClass(elm, hoverClass);
+                    }
+                },
+
+                "drop": function(e) {
+                    var params = self._params,
+                        elm = self.elm;
+
+                    eventer.stop(e); // stops the browser from redirecting.
+
+                    if (!manager.dragging) return
+
+                    // manager.dragging.elm.removeClass('dragging');
+
+                    if (hoverClass && acceptable) {
+                        styler.addClass(elm, hoverClass)
+                    }
+
+                    var e2 = eventer.create("dropped", {
+                        transfer: manager.draggingTransfer
+                    });
+
+                    self.trigger(e2);
+
+                    manager.end(true)
+                }
             });
-            
-            self.trigger(e2);
 
-            e.stopPropagation()
+            manager.on("dndStarted", function(e) {
+                var e2 = eventer.create("started", {
+                    transfer: manager.draggingTransfer,
+                    acceptable: false
+                });
 
-            if (hoverClass && acceptable) {
-              styler.removeClass(elm,hoverClass);
-            }
-          },
+                self.trigger(e2);
 
-          "drop":   function(e){
-            var params = self._params,
-                elm = self.elm;
+                acceptable = e2.acceptable;
+                hoverClass = e2.hoverClass;
+                activeClass = e2.activeClass;
 
-            eventer.stop(e); // stops the browser from redirecting.
+                if (activeClass && acceptable) {
+                    styler.addClass(elm, activeClass);
+                }
 
-            if (!manager.dragging) return
+            }).on("dndEnded", function(e) {
+                var e2 = eventer.create("ended", {
+                    transfer: manager.draggingTransfer,
+                    acceptable: false
+                });
 
-           // manager.dragging.elm.removeClass('dragging');
+                self.trigger(e2);
 
-            if (hoverClass && acceptable) {
-              styler.addClass(elm,hoverClass)
-            }
+                if (hoverClass && acceptable) {
+                    styler.removeClass(elm, hoverClass);
+                }
+                if (activeClass && acceptable) {
+                    styler.removeClass(elm, activeClass);
+                }
 
-            var e2 = eventer.create("dropped",{
-                transfer : manager.draggingTransfer
+                acceptable = false;
+                activeClass = null;
+                hoverClass = null;
             });
 
-            self.trigger(e2);
-
-            manager.end(true)
-          }
-        });
-
-        manager.on("dndStarted",function(e){
-            var e2 = eventer.create("started",{
-                transfer : manager.draggingTransfer,
-                acceptable : false
-            });
-
-            self.trigger(e2);
-
-            acceptable = e2.acceptable;
-            hoverClass = e2.hoverClass;
-            activeClass = e2.activeClass;
-
-            if (activeClass && acceptable) {
-              styler.addClass(elm,activeClass);
-            }
-
-         }).on("dndEnded" , function(e){
-            var e2 = eventer.create("ended",{
-                transfer : manager.draggingTransfer,
-                acceptable : false
-            });
-
-            self.trigger(e2);
-
-            if (hoverClass && acceptable) {
-              styler.removeClass(elm,hoverClass);
-            }
-            if (activeClass && acceptable) {
-              styler.removeClass(elm,activeClass);
-            }
-
-            acceptable = false;
-            activeClass = null;
-            hoverClass = null;
-        });
-
-      }
+        }
     });
 
 
+    /*   
+     * Make the specified element be in a moveable state.
+     * @param {HTMLElement} elm  
+     * @param { } params
+     */
     function draggable(elm, params) {
-      return new Draggable(elm,params);
+        return new Draggable(elm, params);
     }
 
+    /*   
+     * Make the specified element be in a droppable state.
+     * @param {HTMLElement} elm  
+     * @param { } params
+     */
     function droppable(elm, params) {
-      return new Droppable(elm,params);
+        return new Droppable(elm, params);
     }
 
-    function dnd(){
-      return dnd;
+
+    function dnd() {
+        return dnd;
     }
 
     langx.mixin(dnd, {
-       //params ： {
+        //params ： {
         //  target : Element or string or function
         //  handle : Element
         //  copy : boolean
@@ -8564,7 +9106,7 @@ define('skylark-utils/dnd',[
         //
         //
         //}
-        draggable   : draggable,
+        draggable: draggable,
 
         //params ： {
         //  accept : string or function
@@ -8573,23 +9115,22 @@ define('skylark-utils/dnd',[
         //
         //
         //}
-        droppable : droppable,
+        droppable: droppable,
 
-        manager : manager
+        manager: manager
 
 
     });
 
     return skylark.dnd = dnd;
 });
-
 define('skylark-utils/filer',[
     "./skylark",
     "./langx",
     "./datax",
     "./eventer",
     "./styler"
-], function(skylark, langx, datax, eventer,styler) {
+], function(skylark, langx, datax, eventer, styler) {
     var concat = Array.prototype.concat,
         on = eventer.on,
         attr = eventer.attr,
@@ -8601,8 +9142,8 @@ define('skylark-utils/filer',[
         maxFileSize = 1 / 0;
 
 
-    var webentry = (function(){
-        function  one(entry, path) {
+    var webentry = (function() {
+        function one(entry, path) {
             var d = new Deferred(),
                 onError = function(e) {
                     d.reject(e);
@@ -8610,17 +9151,17 @@ define('skylark-utils/filer',[
 
             path = path || '';
             if (entry.isFile) {
-                entry.file(function (file) {
+                entry.file(function(file) {
                     file.relativePath = path;
                     d.resolve(file);
                 }, onError);
             } else if (entry.isDirectory) {
                 var dirReader = entry.createReader();
-                dirReader.readEntries(function (entries) {
+                dirReader.readEntries(function(entries) {
                     all(
                         entries,
                         path + entry.name + '/'
-                    ).then(function (files) {
+                    ).then(function(files) {
                         d.resolve(files);
                     }).catch(onError);
                 }, onError);
@@ -8634,29 +9175,36 @@ define('skylark-utils/filer',[
 
         function all(entries, path) {
             return Deferred.all(
-                langx.map(entries, function (entry) {
+                langx.map(entries, function(entry) {
                     return one(entry, path);
                 })
-            ).then(function(){
-                return concat.apply([],arguments);
+            ).then(function() {
+                return concat.apply([], arguments);
             });
         }
 
         return {
-            one : one,
-            all : all
+            one: one,
+            all: all
         };
     })();
 
     function dataURLtoBlob(dataurl) {
-        var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
-            bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
-        while(n--){
+        var arr = dataurl.split(','),
+            mime = arr[0].match(/:(.*?);/)[1],
+            bstr = atob(arr[1]),
+            n = bstr.length,
+            u8arr = new Uint8Array(n);
+        while (n--) {
             u8arr[n] = bstr.charCodeAt(n);
         }
-        return new Blob([u8arr], {type:mime});
+        return new Blob([u8arr], { type: mime });
     }
-
+    /*
+     * Make the specified element to could accept HTML5 file drag and drop.
+     * @param {HTMLElement} elm
+     * @param {PlainObject} params
+     */
     function dropzone(elm, params) {
         params = params || {};
         var hoverClass = params.hoverClass || "dropzone",
@@ -8664,38 +9212,38 @@ define('skylark-utils/filer',[
 
         var enterdCount = 0;
         on(elm, "dragenter", function(e) {
-            if (e.dataTransfer && e.dataTransfer.types.indexOf("Files")>-1) {
+            if (e.dataTransfer && e.dataTransfer.types.indexOf("Files") > -1) {
                 eventer.stop(e);
-                enterdCount ++;
-                styler.addClass(elm,hoverClass)
+                enterdCount++;
+                styler.addClass(elm, hoverClass)
             }
         });
 
         on(elm, "dragover", function(e) {
-            if (e.dataTransfer && e.dataTransfer.types.indexOf("Files")>-1) {
+            if (e.dataTransfer && e.dataTransfer.types.indexOf("Files") > -1) {
                 eventer.stop(e);
             }
         });
 
         on(elm, "dragleave", function(e) {
-            if (e.dataTransfer && e.dataTransfer.types.indexOf("Files")>-1) {
+            if (e.dataTransfer && e.dataTransfer.types.indexOf("Files") > -1) {
                 enterdCount--
-                if (enterdCount==0) {
-                    styler.removeClass(elm,hoverClass);
+                if (enterdCount == 0) {
+                    styler.removeClass(elm, hoverClass);
                 }
             }
         });
 
         on(elm, "drop", function(e) {
-            if (e.dataTransfer && e.dataTransfer.types.indexOf("Files")>-1) {
-                styler.removeClass(elm,hoverClass)
+            if (e.dataTransfer && e.dataTransfer.types.indexOf("Files") > -1) {
+                styler.removeClass(elm, hoverClass)
                 eventer.stop(e);
                 if (droppedCallback) {
                     var items = e.dataTransfer.items;
                     if (items && items.length && (items[0].webkitGetAsEntry ||
-                        items[0].getAsEntry)) {
+                            items[0].getAsEntry)) {
                         webentry.all(
-                            langx.map(items, function (item) {
+                            langx.map(items, function(item) {
                                 if (item.webkitGetAsEntry) {
                                     return item.webkitGetAsEntry();
                                 }
@@ -8704,7 +9252,7 @@ define('skylark-utils/filer',[
                         ).then(droppedCallback);
                     } else {
                         droppedCallback(e.dataTransfer.files);
-                    }                    
+                    }
                 }
             }
         });
@@ -8712,17 +9260,17 @@ define('skylark-utils/filer',[
         return this;
     }
 
-    function pastezone(elm,params) {
+    function pastezone(elm, params) {
         params = params || {};
         var hoverClass = params.hoverClass || "pastezone",
             pastedCallback = params.pasted;
 
         on(elm, "paste", function(e) {
             var items = e.originalEvent && e.originalEvent.clipboardData &&
-                    e.originalEvent.clipboardData.items,
+                e.originalEvent.clipboardData.items,
                 files = [];
             if (items && items.length) {
-                langx.each(items, function (index, item) {
+                langx.each(items, function(index, item) {
                     var file = item.getAsFile && item.getAsFile();
                     if (file) {
                         files.push(file);
@@ -8736,7 +9284,11 @@ define('skylark-utils/filer',[
 
         return this;
     }
-   
+    /*
+     * Make the specified element to pop-up the file selection dialog box when clicked , and read the contents the files selected from client file system by user.
+     * @param {HTMLElement} elm
+     * @param {PlainObject} params
+     */
     function picker(elm, params) {
         on(elm, "click", function(e) {
             e.preventDefault();
@@ -8747,7 +9299,7 @@ define('skylark-utils/filer',[
 
     function select(params) {
         params = params || {};
-        var directory = params.directory || false, 
+        var directory = params.directory || false,
             multiple = params.multiple || false,
             fileSelected = params.picked;
         if (!fileInput) {
@@ -8790,7 +9342,7 @@ define('skylark-utils/filer',[
 
     function upload(params) {
         var xoptions = langx.mixin({
-            contentRange : null, //
+            contentRange: null, //
 
             // The parameter name for the file form data (the request argument name).
             // If undefined or empty, the name property of the file input field is
@@ -8851,10 +9403,10 @@ define('skylark-utils/filer',[
 
             // Translation function, gets the message key to be translated
             // and an object with context specific data as arguments:
-            i18n: function (message, context) {
+            i18n: function(message, context) {
                 message = this.messages[message] || message.toString();
                 if (context) {
-                    langx.each(context, function (key, value) {
+                    langx.each(context, function(key, value) {
                         message = message.replace('{' + key + '}', value);
                     });
                 }
@@ -8866,7 +9418,7 @@ define('skylark-utils/filer',[
             // value properties, a function returning such an array, a FormData
             // object (for XHR file uploads), or a simple object.
             // The form of the first fileInput is given as parameter to the function:
-            formData: function (form) {
+            formData: function(form) {
                 return form.serializeArray();
             },
 
@@ -8886,13 +9438,13 @@ define('skylark-utils/filer',[
             // data.submit() returns a Promise object and allows to attach additional
             // handlers using jQuery's Deferred callbacks:
             // data.submit().done(func).fail(func).always(func);
-            add: function (e, data) {
+            add: function(e, data) {
                 if (e.isDefaultPrevented()) {
                     return false;
                 }
                 if (data.autoUpload || (data.autoUpload !== false &&
                         $(this).fileupload('option', 'autoUpload'))) {
-                    data.process().done(function () {
+                    data.process().done(function() {
                         data.submit();
                     });
                 }
@@ -8956,14 +9508,15 @@ define('skylark-utils/filer',[
             processData: false,
             contentType: false,
             cache: false
-        },params);
+        }, params);
 
-        var blobSlice = function () {
-            var slice = Blob.prototype.slice || Blob.prototype.webkitSlice || Blob.prototype.mozSlice;
-            return slice.apply(this, arguments);
-        },ajax = function(data) {
-            return langx.Xhr.request(data.url,data);
-        };
+        var blobSlice = function() {
+                var slice = Blob.prototype.slice || Blob.prototype.webkitSlice || Blob.prototype.mozSlice;
+                return slice.apply(this, arguments);
+            },
+            ajax = function(data) {
+                return langx.Xhr.request(data.url, data);
+            };
 
         function initDataSettings(o) {
             o.type = o.type || "POST";
@@ -8983,7 +9536,7 @@ define('skylark-utils/filer',[
                 // Ignore non-multipart setting if not supported:
                 multipart = o.multipart,
                 paramName = langx.type(o.paramName) === 'array' ?
-                    o.paramName[0] : o.paramName;
+                o.paramName[0] : o.paramName;
 
             o.headers = langx.mixin({}, o.headers);
             if (o.contentRange) {
@@ -8999,7 +9552,7 @@ define('skylark-utils/filer',[
                 if (o.blob) {
                     formData.append(paramName, o.blob, file.name);
                 } else {
-                    langx.each(o.files, function (index, file) {
+                    langx.each(o.files, function(index, file) {
                         // This check allows the tests to run with
                         // dummy objects:
                         formData.append(
@@ -9008,8 +9561,8 @@ define('skylark-utils/filer',[
                             file,
                             file.uploadName || file.name
                         );
-                    });                    
-                }                
+                    });
+                }
                 o.data = formData;
             }
             // Blob reference is not needed anymore, free memory:
@@ -9018,7 +9571,7 @@ define('skylark-utils/filer',[
 
         function getTotal(files) {
             var total = 0;
-            langx.each(files, function (index, file) {
+            langx.each(files, function(index, file) {
                 total += file.size || 1;
             });
             return total;
@@ -9028,7 +9581,7 @@ define('skylark-utils/filer',[
             var range = jqXHR.getResponseHeader('Range'),
                 parts = range && range.split('-'),
                 upperBytesPos = parts && parts.length > 1 &&
-                    parseInt(parts[1], 10);
+                parseInt(parts[1], 10);
             return upperBytesPos && upperBytesPos + 1;
         }
 
@@ -9049,7 +9602,7 @@ define('skylark-utils/filer',[
             this.timestamp = ((Date.now) ? Date.now() : (new Date()).getTime());
             this.loaded = 0;
             this.bitrate = 0;
-            this.getBitrate = function (now, loaded, interval) {
+            this.getBitrate = function(now, loaded, interval) {
                 var timeDiff = now - this.timestamp;
                 if (!this.bitrate || !interval || timeDiff > interval) {
                     this.bitrate = (loaded - this.loaded) * (1000 / timeDiff) * 8;
@@ -9073,7 +9626,7 @@ define('skylark-utils/filer',[
                 jqXHR,
                 upload;
             if (!(slice && (ub || mcs < fs)) ||
-                    options.data) {
+                options.data) {
                 return false;
             }
             if (testOnly) {
@@ -9083,12 +9636,11 @@ define('skylark-utils/filer',[
                 file.error = options.i18n('uploadedBytes');
                 return this._getXHRPromise(
                     false,
-                    options.context,
-                    [null, 'error', file.error]
+                    options.context, [null, 'error', file.error]
                 );
             }
             // The chunk upload method:
-            upload = function () {
+            upload = function() {
                 // Clone the options object for each chunk upload:
                 var o = langx.mixin({}, options),
                     currentLoaded = o._progress.loaded;
@@ -9108,7 +9660,7 @@ define('skylark-utils/filer',[
                 initXHRData(o);
                 // Add progress listeners for this chunk upload:
                 //initProgressListener(o);
-                jqXHR = $.ajax(o).done(function (result, textStatus, jqXHR) {
+                jqXHR = $.ajax(o).done(function(result, textStatus, jqXHR) {
                         ub = getUploadedBytes(jqXHR) ||
                             (ub + o.chunkSize);
                         // Create a progress event if no final progress event
@@ -9133,31 +9685,29 @@ define('skylark-utils/filer',[
                             upload();
                         } else {
                             dfd.resolveWith(
-                                o.context,
-                                [result, textStatus, jqXHR]
+                                o.context, [result, textStatus, jqXHR]
                             );
                         }
                     })
-                    .fail(function (jqXHR, textStatus, errorThrown) {
+                    .fail(function(jqXHR, textStatus, errorThrown) {
                         o.jqXHR = jqXHR;
                         o.textStatus = textStatus;
                         o.errorThrown = errorThrown;
                         //that._trigger('chunkfail', null, o);
                         //that._trigger('chunkalways', null, o);
                         dfd.rejectWith(
-                            o.context,
-                            [jqXHR, textStatus, errorThrown]
+                            o.context, [jqXHR, textStatus, errorThrown]
                         );
                     });
             };
             //this._enhancePromise(promise);
-            promise.abort = function () {
+            promise.abort = function() {
                 return jqXHR.abort();
             };
             upload();
             return promise;
         }
-        
+
         initDataSettings(xoptions);
 
         xoptions._bitrateTimer = new BitrateTimer();
@@ -9173,22 +9723,22 @@ define('skylark-utils/filer',[
         return filer;
     };
 
-    langx.mixin(filer , {
+    langx.mixin(filer, {
         dropzone: dropzone,
 
         pastezone: pastezone,
 
         picker: picker,
 
-        select : select,
+        select: select,
 
-        upload  : upload,
+        upload: upload,
 
-        readFile : function(file,params) {
+        readFile: function(file, params) {
             params = params || {};
             var d = new Deferred,
                 reader = new FileReader();
-            
+
             reader.onload = function(evt) {
                 d.resolve(evt.target.result);
             };
@@ -9200,11 +9750,11 @@ define('skylark-utils/filer',[
                     alert('error code: ' + code);
                 }
             };
-            
-            if (params.asArrayBuffer){
+
+            if (params.asArrayBuffer) {
                 reader.readAsArrayBuffer(file);
             } else if (params.asDataUrl) {
-                reader.readAsDataURL(file);                
+                reader.readAsDataURL(file);
             } else if (params.asText) {
                 reader.readAsText(file);
             } else {
@@ -9213,13 +9763,13 @@ define('skylark-utils/filer',[
 
             return d.promise;
         },
-         
-        writeFile : function(data,name) {
-            if (window.navigator.msSaveBlob) { 
-               if (langx.isString(data)) {
-                   data = dataURItoBlob(data);
-               }
-               window.navigator.msSaveBlob(data, name);
+
+        writeFile: function(data, name) {
+            if (window.navigator.msSaveBlob) {
+                if (langx.isString(data)) {
+                    data = dataURItoBlob(data);
+                }
+                window.navigator.msSaveBlob(data, name);
             } else {
                 var a = document.createElement('a');
                 if (data instanceof Blob) {
@@ -9228,14 +9778,13 @@ define('skylark-utils/filer',[
                 a.href = data;
                 a.setAttribute('download', name || 'noname');
                 a.dispatchEvent(new CustomEvent('click'));
-            }              
+            }
         }
 
     });
 
     return skylark.filer = filer;
 });
-
 define('skylark-utils/velm',[
     "./skylark",
     "./langx",
@@ -9251,7 +9800,9 @@ define('skylark-utils/velm',[
 ], function(skylark, langx, datax, dnd, eventer, filer, finder, fx, geom, noder, styler) {
     var map = Array.prototype.map,
         slice = Array.prototype.slice;
-
+    /*
+     * VisualElement is a skylark class type wrapping a visule dom node,provides a number of prototype methods and supports chain calls.
+     */
     var VisualElement = langx.klass({
         klassName: "VisualElement",
 
@@ -9262,7 +9813,9 @@ define('skylark-utils/velm',[
             this.domNode = node;
         }
     });
-
+    /*
+     * the VisualElement object wrapping document.body
+     */
     var root = new VisualElement(document.body),
         velm = function(node) {
             if (node) {
@@ -9271,7 +9824,11 @@ define('skylark-utils/velm',[
                 return root;
             }
         };
-
+    /*
+     * Extend VisualElement prototype with wrapping the specified methods.
+     * @param {ArrayLike} fn
+     * @param {Object} context
+     */
     function _delegator(fn, context) {
         return function() {
             var self = this,
@@ -9313,7 +9870,7 @@ define('skylark-utils/velm',[
 
         VisualElement: VisualElement,
 
-        partial : function(name,fn) {
+        partial: function(name, fn) {
             var props = {};
 
             props[name] = fn;
@@ -9384,6 +9941,10 @@ define('skylark-utils/velm',[
         "siblings"
     ], finder);
 
+    /*
+     * find a dom element matched by the specified selector.
+     * @param {String} selector
+     */
     velm.find = function(selector) {
         if (selector === "body") {
             return this.root;
@@ -9451,6 +10012,7 @@ define('skylark-utils/velm',[
         "ownerDoc",
         "prepend",
         "remove",
+        "removeChild",
         "replace",
         "reverse",
         "throb",
@@ -9472,10 +10034,45 @@ define('skylark-utils/velm',[
         "show",
         "toggleClass"
     ], styler);
-    
+
+    // properties
+
+    var properties = [ 'position', 'left', 'top', 'right', 'bottom', 'width', 'height', 'border', 'borderLeft',
+    'borderTop', 'borderRight', 'borderBottom', 'borderColor', 'display', 'overflow', 'margin', 'marginLeft', 'marginTop', 'marginRight', 'marginBottom', 'padding', 'paddingLeft', 'paddingTop', 'paddingRight', 'paddingBottom', 'color',
+    'background', 'backgroundColor', 'opacity', 'fontSize', 'fontWeight', 'textAlign', 'textDecoration', 'textTransform', 'cursor', 'zIndex' ];
+
+    properties.forEach( function ( property ) {
+
+        var method = property;
+
+        Velm.prototype[ method ] = function (value) {
+
+            this.css( property, value );
+
+            return this;
+
+        };
+
+    });
+
+    // events
+    var events = [ 'keyUp', 'keyDown', 'mouseOver', 'mouseOut', 'click', 'dblClick', 'change' ];
+
+    events.forEach( function ( event ) {
+
+        var method = event;
+
+        Velm.prototype[ method ] = function ( callback ) {
+
+            this.on( event.toLowerCase(), callback);
+
+            return this;
+        };
+
+    });
+
     return skylark.velm = velm;
 });
-
 define('skylark-utils/widgets',[
     "./skylark",
     "./langx",
