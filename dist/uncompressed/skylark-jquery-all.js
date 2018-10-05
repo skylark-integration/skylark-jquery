@@ -2965,11 +2965,11 @@ define('skylark-utils/styler',[
             var computedStyle,
                 computedStyle = getComputedStyle(elm, '')
             if (langx.isString(property)) {
-                return elm.style[camelCase(property)] || computedStyle.getPropertyValue(property)
+                return elm.style[camelCase(property)] || computedStyle.getPropertyValue(dasherize(property))
             } else if (langx.isArrayLike(property)) {
                 var props = {}
                 forEach.call(property, function(prop) {
-                    props[prop] = (elm.style[camelCase(prop)] || computedStyle.getPropertyValue(prop))
+                    props[prop] = (elm.style[camelCase(prop)] || computedStyle.getPropertyValue(dasherize(prop)))
                 })
                 return props
             }
@@ -3321,10 +3321,10 @@ define('skylark-utils/noder',[
         } else {
             this.empty(node);
             html = html || "";
-            if (langx.isString(html) || langx.isNumber(html)) {
-
+            if (langx.isString(html)) {
                 html = html.replace( rxhtmlTag, "<$1></$2>" );
-               
+            }
+            if (langx.isString(html) || langx.isNumber(html)) {               
                 node.innerHTML = html;
             } else if (langx.isArrayLike(html)) {
                 for (var i = 0; i < html.length; i++) {
@@ -6681,7 +6681,8 @@ define('skylark-utils/fx',[
             endEvent,
             wrappedCallback,
             fired = false,
-            hasScrollTop = false;
+            hasScrollTop = false,
+            resetClipAuto = false;
 
         if (langx.isPlainObject(duration)) {
             ease = duration.easing;
@@ -6723,13 +6724,24 @@ define('skylark-utils/fx',[
         } else {
             // CSS transitions
             for (key in properties) {
+                var v = properties[key];
                 if (supportedTransforms.test(key)) {
-                    transforms += key + "(" + properties[key] + ") ";
+                    transforms += key + "(" + v + ") ";
                 } else {
                     if (key === "scrollTop") {
                         hasScrollTop = true;
                     }
-                    cssValues[key] = properties[key];
+                    if (key == "clip" && langx.isPlainObject(v)) {
+                        cssValues[key] = "rect(" + v.top+"px,"+ v.right +"px,"+ v.bottom +"px,"+ v.left+"px)";
+                        if (styler.css(elm,"clip") == "auto") {
+                            var size = geom.size(elm);
+                            styler.css(elm,"clip","rect("+"0px,"+ size.width +"px,"+ size.height +"px,"+"0px)");  
+                            resetClipAuto = true;
+                        }
+
+                    } else {
+                        cssValues[key] = v;
+                    }
                     cssProperties.push(langx.dasherize(key));
                 }
             }
@@ -6759,6 +6771,9 @@ define('skylark-utils/fx',[
                 eventer.off(elm, animationEnd, wrappedCallback) // triggered by setTimeout
             }
             styler.css(elm, cssReset);
+            if (resetClipAuto) {
+ //               styler.css(elm,"clip","auto");
+            }
             callback && callback.call(this);
         };
 
@@ -6796,7 +6811,7 @@ define('skylark-utils/fx',[
     }
 
     /*   
-     * Display the matched elements.
+     * Display an element.
      * @param {Object} elm  
      * @param {String} speed
      * @param {Function} callback
@@ -6816,7 +6831,7 @@ define('skylark-utils/fx',[
 
 
     /*   
-     * Hide the matched elements.
+     * Hide an element.
      * @param {Object} elm  
      * @param {String} speed
      * @param {Function} callback
@@ -6840,7 +6855,7 @@ define('skylark-utils/fx',[
     }
 
     /*   
-     * Get the current vertical position of the scroll bar for the first element in the set of matched elements or set the vertical position of the scroll bar for every matched element.
+     * Set the vertical position of the scroll bar for an element.
      * @param {Object} elm  
      * @param {Number or String} pos
      * @param {Number or String} speed
@@ -6866,7 +6881,7 @@ define('skylark-utils/fx',[
     }
 
     /*   
-     * Display or hide the matched elements.
+     * Display or hide an element.
      * @param {Object} elm  
      * @param {Number or String} speed
      * @param {Function} callback
@@ -6881,7 +6896,7 @@ define('skylark-utils/fx',[
     }
 
     /*   
-     * Adjust the opacity of the matched elements.
+     * Adjust the opacity of an element.
      * @param {Object} elm  
      * @param {Number or String} speed
      * @param {Number or String} opacity
@@ -6895,7 +6910,7 @@ define('skylark-utils/fx',[
 
 
     /*   
-     * Display the matched elements by fading them to opaque.
+     * Display an element by fading them to opaque.
      * @param {Object} elm  
      * @param {Number or String} speed
      * @param {String} easing
@@ -6916,7 +6931,7 @@ define('skylark-utils/fx',[
     }
 
     /*   
-     * Hide the matched elements by fading them to transparent.
+     * Hide an element by fading them to transparent.
      * @param {Object} elm  
      * @param {Number or String} speed
      * @param {String} easing
@@ -6925,6 +6940,7 @@ define('skylark-utils/fx',[
     function fadeOut(elm, speed, easing, callback) {
         var _elm = elm,
             complete,
+            opacity = styler.css(elm,"opacity"),
             options = {};
 
         if (langx.isPlainObject(speed)) {
@@ -6941,6 +6957,7 @@ define('skylark-utils/fx',[
             }
         }
         options.complete = function() {
+            styler.css(elm,"opacity",opacity);
             styler.hide(elm);
             if (complete) {
                 complete.call(elm);
@@ -6953,7 +6970,7 @@ define('skylark-utils/fx',[
     }
 
     /*   
-     * Display or hide the matched elements by animating their opacity.
+     * Display or hide an element by animating its opacity.
      * @param {Object} elm  
      * @param {Number or String} speed
      * @param {String} ceasing
@@ -6969,7 +6986,7 @@ define('skylark-utils/fx',[
     }
 
     /*   
-     * Display the matched elements with a sliding motion.
+     * Display an element with a sliding motion.
      * @param {Object} elm  
      * @param {Number or String} duration
      * @param {Function} callback
@@ -7027,7 +7044,7 @@ define('skylark-utils/fx',[
     };
 
     /*   
-     * Hide the matched elements with a sliding motion.
+     * Hide an element with a sliding motion.
      * @param {Object} elm  
      * @param {Number or String} duration
      * @param {Function} callback
@@ -7090,7 +7107,7 @@ define('skylark-utils/fx',[
 
 
     /*   
-     * Display or hide the matched elements with a sliding motion.
+     * Display or hide an element with a sliding motion.
      * @param {Object} elm  
      * @param {Number or String} duration
      * @param {Function} callback
