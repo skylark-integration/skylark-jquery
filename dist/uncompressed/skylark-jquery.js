@@ -92,7 +92,8 @@ define('skylark-jquery/core',[
 	"skylark-utils/finder",
 	"skylark-utils/fx",
 	"skylark-utils/styler",
-	"skylark-utils/query"
+	"skylark-utils/query",
+	"skylark-utils/widgets"
 ],function(skylark,browser,langx,noder,datax,eventer,finder,fx,styler,query){
 	var filter = Array.prototype.filter,
 		slice = Array.prototype.slice;
@@ -340,6 +341,15 @@ define('skylark-jquery/core',[
 	            curElem.css(props);
 	        }
 	    };
+
+        $._data = function(elm,propName) {
+            if (elm.hasAttribute) {
+                return datax.data(elm,propName);
+            } else {
+                return {};
+            }
+        };
+        	    
     })(query);
 
     query.parseHTML = function(html) {
@@ -422,6 +432,16 @@ define('skylark-jquery/ajax',[
     };
 
     $.ajax = function(options) {
+        if (!options) {
+            options = {
+                url :  "./"
+            };
+        } else if (langx.isString(options)) {
+            options = {
+                url :  options
+            };
+        }
+
         if ('jsonp' == options.dataType) {
             var hasPlaceholder = /\?.+=\?/.test(options.url);
 
@@ -470,7 +490,12 @@ define('skylark-jquery/ajax',[
         return $.ajax(options)
     }
 
+    var originalLoad = $.fn.load;
+
     $.fn.load = function(url, data, success) {
+        if ("string" != typeof url && originalLoad) {
+            return originalLoad.apply(this, arguments);
+        }
         if (!this.length) return this
         var self = this,
             options = parseArguments(url, data, success),
@@ -681,7 +706,20 @@ define('skylark-jquery/deferred',[
         return d;
     };
 
-    $.when = langx.Deferred.when;
+    $.when = function(){
+        var p = langx.Deferred.all(langx.makeArray(arguments)),
+            originThen = p.then;
+        p.then = function(onResolved,onRejected) {
+            var handler = function(results) {
+                results = results.map(function(result){
+                    return [result];
+                });
+                return onResolved && onResolved.apply(null,results);
+            };
+            return originThen.call(p,handler,onRejected);
+        };
+        return p;
+    };
 
     return $;
 

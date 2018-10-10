@@ -74,6 +74,16 @@ define([
     };
 
     $.ajax = function(options) {
+        if (!options) {
+            options = {
+                url :  "./"
+            };
+        } else if (langx.isString(options)) {
+            options = {
+                url :  options
+            };
+        }
+
         if ('jsonp' == options.dataType) {
             var hasPlaceholder = /\?.+=\?/.test(options.url);
 
@@ -122,7 +132,12 @@ define([
         return $.ajax(options)
     }
 
+    var originalLoad = $.fn.load;
+
     $.fn.load = function(url, data, success) {
+        if ("string" != typeof url && originalLoad) {
+            return originalLoad.apply(this, arguments);
+        }
         if (!this.length) return this
         var self = this,
             options = parseArguments(url, data, success),

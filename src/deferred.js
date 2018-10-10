@@ -12,7 +12,20 @@ define([
         return d;
     };
 
-    $.when = langx.Deferred.when;
+    $.when = function(){
+        var p = langx.Deferred.all(langx.makeArray(arguments)),
+            originThen = p.then;
+        p.then = function(onResolved,onRejected) {
+            var handler = function(results) {
+                results = results.map(function(result){
+                    return [result];
+                });
+                return onResolved && onResolved.apply(null,results);
+            };
+            return originThen.call(p,handler,onRejected);
+        };
+        return p;
+    };
 
     return $;
 

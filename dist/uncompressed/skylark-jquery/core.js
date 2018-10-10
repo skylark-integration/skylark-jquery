@@ -15,7 +15,8 @@ define([
 	"skylark-utils/finder",
 	"skylark-utils/fx",
 	"skylark-utils/styler",
-	"skylark-utils/query"
+	"skylark-utils/query",
+	"skylark-utils/widgets"
 ],function(skylark,browser,langx,noder,datax,eventer,finder,fx,styler,query){
 	var filter = Array.prototype.filter,
 		slice = Array.prototype.slice;
@@ -263,6 +264,15 @@ define([
 	            curElem.css(props);
 	        }
 	    };
+
+        $._data = function(elm,propName) {
+            if (elm.hasAttribute) {
+                return datax.data(elm,propName);
+            } else {
+                return {};
+            }
+        };
+        	    
     })(query);
 
     query.parseHTML = function(html) {
