@@ -18,7 +18,7 @@
           return relative;
         }
         var stack = base.split("/"),
-            parts = relative.split("/");    
+            parts = relative.split("/");
         stack.pop(); 
         for (var i=0; i<parts.length; i++) {
             if (parts[i] == ".")
@@ -44,7 +44,7 @@
             map[id] = factory;
         }
     };
-    require =  globals.require = function(id) {
+    require = globals.require = function(id) {
         if (!map.hasOwnProperty(id)) {
             throw new Error('Module ' + id + ' has not been defined');
         }
@@ -61,27 +61,25 @@
         return module.exports;
     };
   }
+  
+  if (!define) {
+     throw new Error("The module utility (ex: requirejs or skylark-utils) is not loaded!");
+  }
 
   factory(define,require);
 
-  if (isAmd) {
-    require.get = function(context, id, relMap, localRequire) {
-        if (context.intakeDefines) {
-          context.intakeDefines(true);
-        }
-        return context.defined[id];
+  if (!isAmd) {
+    var skylarkjs = require("skylark-langx/skylark");
+
+    if (isCmd) {
+      exports = skylarkjs;
+    } else {
+      globals.skylarkjs  = skylarkjs;
     }
   }
 
-  var jQuery =  require("skylark-jquery/main");
-
-  if (isCmd) {
-      exports = jQuery;
-  } else {
-      globals.jQuery = globals.$ = jQuery;
-  }
-
 })(function(define,require) {
+
 define('skylark-jquery/core',[
 	"skylark-utils/skylark",
 	"skylark-utils/browser",

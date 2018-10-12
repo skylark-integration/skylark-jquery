@@ -4,6 +4,7 @@
   "description": "The skylark plugin library for fully compatible API with jquery.",
   "main": "-",
   "scripts": {
+    "build": "sbundle build .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "homepage": "www.skylarkjs.org",
@@ -20,25 +21,10 @@
   "author": "Hudaokeji Co.,Ltd",
   "license": "MIT",
   "bugs": "https://github.com/skylarkjs/skylark-jquery/issues",
-  "dependencies": {},
   "devDependencies": {
-    "del": "^1.2.1",
-    "gulp": "^3.9.0",
-    "gulp-amd-optimizer": "^0.3.4",
-    "gulp-autoprefixer": "^2.3.1",
-    "gulp-concat": "^2.6.0",
-    "gulp-footer": "^1.0.5",
-    "gulp-header": "^1.7.1",
-    "gulp-rename": "~1.2.2",
-    "gulp-replace": "^0.6.1",
-    "gulp-requirejs": "^1.0.0",
-    "gulp-sourcemaps": "^1.5.2",
-    "gulp-uglify": "^1.5.4",
-    "gulp-usemin": "^0.3.11",
-    "gulp-util": "^3.0.6",
-    "run-sequence": "^2.1.0",
-    "skylark-langx": "^0.9.4",
-    "skylark-utils": "^0.9.4"
+    "skylark-langx": "https://github.com/skylarklangx/skylark-langx#master",
+    "skylark-utils": "https://github.com/skylarkutils/skylark-utils#master",
+    "skylark-utils-dom": "https://github.com/skylarkutils/skylark-utils-dom#master"
   },
   "engines": {
     "node": ">=0.8.0"
