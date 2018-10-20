@@ -13,7 +13,7 @@ The optional skylark.jquery library is based on the skylark/query module, provid
 | :--- | :--- | :--- |
 | [skylark-langx](https://github.com/skylarkjs/skylark-langx) |  | Javascript language extension library |
 | [skylark-utils](https://github.com/skylarkutils/skylark-utils) |  | An Universal HTML5 Javascript Libraryskylark-utils-dom |
-| [skylark-utils-dom](https://github.com/skylarkutils/skylark-utils-dom) |  |  |
+| [skylark-utils-dom](https://github.com/skylarkutils/skylark-utils-dom) |  | An Universal DOM Utility Library |
 
 ## Installation
 
