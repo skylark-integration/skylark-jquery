@@ -12,6 +12,8 @@ The optional skylark.jquery library is based on the skylark/query module, provid
 | Project | Status | Description |
 | :--- | :--- | :--- |
 | [skylark-langx](https://github.com/skylarkjs/skylark-langx) |  | Javascript language extension library |
+|  |  |  |
+|  |  |  |
 
 ## Installation
 
