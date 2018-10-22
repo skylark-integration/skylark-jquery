@@ -1,4 +1,4 @@
-# [https://github.com/skylarkjs/skylark-langx](https://github.com/skylarkjs/skylark-langx)skylark-jquery
+# skylark-jquery
 
 The  skylark extension library providing APIs that are fully compatible with jquery
 
