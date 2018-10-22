@@ -48,6 +48,15 @@ please refer to the examples:
 
 Have a bug or a feature request? Please first search for existing and closed issues. If your problem or idea is not addressed yet, [please open a new issue](https://github.com/skylarkjs/skylark-jquery/issues/new).
 
+## Building
+
+* Ensure that Node.js is installed.
+* Run npm install
+  [https://github.com/skylarkjs/skylark-bundle-cli.git](https://github.com/skylarkjs/skylark-bundle-cli.git)
+  -g to ensure sbundle is installed.
+* Run npm install to ensure the required dependencies are installed.
+* Run npm run build. The builds will be placed in the dist/ directory.
+
 ## License
 
 The code is released under the [MIT License](https://github.com/skylarkjs/skylark-jquery/blob/master/LICENSE).
