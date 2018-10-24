@@ -17,7 +17,7 @@ The optional skylark.jquery library is based on the skylark/query module, provid
 
 ## Differentbuilds
 
-buildsareinthedirectorydist.
+builds are in the directory dist.
 
 |  | build | Description |
 | :--- | :--- | :--- |
@@ -26,7 +26,7 @@ buildsareinthedirectorydist.
 | full（development） | uncompressed/skylark-jquery-all.js | includeddependences |
 | only（development） | uncompressed/skylark-jquery.js | notincludeddependences |
 
-Pleaseusethe"full"versionwhenusingthislibraryalone,andusethe"only"versionwhenusingotherskylarklibraries.
+Please use the"full"version when using this library alone,and use the "only" version when using other skylark libraries.
 
 ## Installation
 
