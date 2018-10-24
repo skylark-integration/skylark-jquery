@@ -21,10 +21,10 @@ builds are in the directory dist.
 
 |  | build | Description |
 | :--- | :--- | :--- |
-| full | skylark-jquery-all.js | includeddependences |
-| only | skylark-jquery.js | notincludeddependences |
-| full（development） | uncompressed/skylark-jquery-all.js | includeddependences |
-| only（development） | uncompressed/skylark-jquery.js | notincludeddependences |
+| full | skylark-jquery-all.js | included dependences |
+| only | skylark-jquery.js | not included dependences |
+| full（development） | uncompressed/skylark-jquery-all.js | includedde pendences |
+| only（development） | uncompressed/skylark-jquery.js | not included dependences |
 
 Please use the"full"version when using this library alone,and use the "only" version when using other skylark libraries.
 
@@ -33,23 +33,11 @@ Please use the"full"version when using this library alone,and use the "only" ver
 You can get the latest version in many different ways:
 
 * Downloading
-  [a ZIP file from master](https://github.com/skylarkutils/skylark-utils-color/archive/master.zip)
+  [a ZIP file from master](https://github.com/skylarkutils/skylark-jquery/archive/master.zip)
 * Cloning using Git:
-  `git clone `[`https://github.com/skylarkutils/skylark-utils-color.git`](https://github.com/skylarkutils/skylark-jquery.git)
+  `git clone `[`https://github.com/skylarkutils/skylark-jquery.git`](https://github.com/skylarkutils/skylark-jquery.git)
 * Installing via NPM:
-  `npm install https://github.com/skylarkutils/skylark-utils-color.git#master --save`
-
-## Installation
-
-There are multiple ways to install the skylark-jquery library.
-
-* npm  
-  npm install skylark-jquery --save
-* bower  
-  bower install skylark-jquery
-* cdn  
-  [http://registry.skylarkjs.org/packages/skylark-jquery/v0.9.0/skylark-jquery.js](http://registry.skylarkjs.org/packages/skylark-jquery/v0.9.0/skylark-jquery.js)    or  
-  [http://registry.skylarkjs.org/packages/skylark-jquery/v0.9.0/uncompressed/skylark-jquery.js](http://registry.skylarkjs.org/packages/skylark-jquery/v0.9.0/uncompressed/skylark-jquery.js) 
+  `npm install https://github.com/skylarkutils/skylark-jqueryr.git#master --save`
 
 ## Examples
 
@@ -82,4 +70,3 @@ Have a bug or a feature request? Please first search for existing and closed iss
 ## License
 
 The code is released under the [MIT License](https://github.com/skylarkjs/skylark-jquery/blob/master/LICENSE).
-
