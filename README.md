@@ -35,7 +35,7 @@ You can get the latest version in many different ways:
 * Downloading
   [a ZIP file from master](https://github.com/skylarkutils/skylark-utils-color/archive/master.zip)
 * Cloning using Git:
-  `git clone https://github.com/skylarkutils/skylark-utils-color.git`
+  `git clone `[`https://github.com/skylarkutils/skylark-utils-color.git`](https://github.com/skylarkutils/skylark-jquery.git)
 * Installing via NPM:
   `npm install https://github.com/skylarkutils/skylark-utils-color.git#master --save`
 
