@@ -21,10 +21,10 @@ buildsareinthedirectorydist.
 
 |  | build | Description |
 | :--- | :--- | :--- |
-| full | skylark-utils-color-all.js | includeddependences |
-| only | skylark-utils-color.js | notincludeddependences |
-| full（development） | uncompressed/skylark-utils-all.js | includeddependences |
-| only（development） | uncompressed/skylark-utils.js | notincludeddependences |
+| full | skylark-jquery-all.js | includeddependences |
+| only | skylark-jquery.js | notincludeddependences |
+| full（development） | uncompressed/skylark-jquery-all.js | includeddependences |
+| only（development） | uncompressed/skylark-jquery.js | notincludeddependences |
 
 Pleaseusethe"full"versionwhenusingthislibraryalone,andusethe"only"versionwhenusingotherskylarklibraries.
 
