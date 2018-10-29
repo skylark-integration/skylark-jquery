@@ -34,21 +34,7 @@ define([
 	
 	    $.each = langx.each;
 
-	    $.extend = function(target) {
-	        var deep, args = slice.call(arguments, 1);
-	        if (typeof target == 'boolean') {
-	            deep = target
-	            target = args.shift()
-	        }
-	        if (args.length == 0) {
-	            args = [target];
-	            target = this;
-	        }
-	        args.forEach(function(arg) {
-	        	langx.mixin(target, arg, deep);
-	        });
-	        return target;
-	    };
+	    $.extend = langx.extend;
 
 	    $.grep = function(elements, callback) {
 	        return filter.call(elements, callback)
