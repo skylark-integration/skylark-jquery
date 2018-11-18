@@ -56,7 +56,7 @@
                 args.push(require(dep));
             })
 
-            module.exports = module.factory.apply(window, args);
+            module.exports = module.factory.apply(globals, args);
         }
         return module.exports;
     };
@@ -72,7 +72,7 @@
     var skylarkjs = require("skylark-langx/skylark");
 
     if (isCmd) {
-      exports = skylarkjs;
+      module.exports = skylarkjs;
     } else {
       globals.skylarkjs  = skylarkjs;
     }
@@ -81,18 +81,17 @@
 })(function(define,require) {
 
 define('skylark-jquery/core',[
-	"skylark-utils/skylark",
-	"skylark-utils/browser",
-	"skylark-utils/langx",
-	"skylark-utils/noder",
-	"skylark-utils/datax",
-	"skylark-utils/eventer",
-	"skylark-utils/finder",
-	"skylark-utils/fx",
-	"skylark-utils/styler",
-	"skylark-utils/query",
-	"skylark-utils/widgets"
-],function(skylark,browser,langx,noder,datax,eventer,finder,fx,styler,query){
+	"skylark-langx/skylark",
+	"skylark-langx/langx",
+	"skylark-utils-dom/browser",
+	"skylark-utils-dom/noder",
+	"skylark-utils-dom/datax",
+	"skylark-utils-dom/eventer",
+	"skylark-utils-dom/finder",
+	"skylark-utils-dom/fx",
+	"skylark-utils-dom/styler",
+	"skylark-utils-dom/query"
+],function(skylark,langx,browser,noder,datax,eventer,finder,fx,styler,query){
 	var filter = Array.prototype.filter,
 		slice = Array.prototype.slice;
 
@@ -1129,8 +1128,7 @@ define('skylark-jquery/main',[
     "./ajax",
     "./callbacks",
     "./deferred",
-    "./queue",
-	"skylark-utils/widgets"    
+    "./queue"
 ], function($) {
     return $;
 });

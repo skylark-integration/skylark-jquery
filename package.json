@@ -23,7 +23,6 @@
   "bugs": "https://github.com/skylarkjs/skylark-jquery/issues",
   "devDependencies": {
     "skylark-langx": "https://github.com/skylarklangx/skylark-langx#master",
-    "skylark-utils": "https://github.com/skylarkutils/skylark-utils#master",
     "skylark-utils-dom": "https://github.com/skylarkutils/skylark-utils-dom#master"
   },
   "engines": {

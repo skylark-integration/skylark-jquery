@@ -1,16 +1,15 @@
 define([
-	"skylark-utils/skylark",
-	"skylark-utils/browser",
-	"skylark-utils/langx",
-	"skylark-utils/noder",
-	"skylark-utils/datax",
-	"skylark-utils/eventer",
-	"skylark-utils/finder",
-	"skylark-utils/fx",
-	"skylark-utils/styler",
-	"skylark-utils/query",
-	"skylark-utils/widgets"
-],function(skylark,browser,langx,noder,datax,eventer,finder,fx,styler,query){
+	"skylark-langx/skylark",
+	"skylark-langx/langx",
+	"skylark-utils-dom/browser",
+	"skylark-utils-dom/noder",
+	"skylark-utils-dom/datax",
+	"skylark-utils-dom/eventer",
+	"skylark-utils-dom/finder",
+	"skylark-utils-dom/fx",
+	"skylark-utils-dom/styler",
+	"skylark-utils-dom/query"
+],function(skylark,langx,browser,noder,datax,eventer,finder,fx,styler,query){
 	var filter = Array.prototype.filter,
 		slice = Array.prototype.slice;
 
