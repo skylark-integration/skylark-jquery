@@ -8663,6 +8663,7 @@ define('skylark-jquery/core',[
 	    $.isFunction = langx.isFunction;
 	    $.isWindow = langx.isWindow;
 	    $.isPlainObject = langx.isPlainObject;
+        $.isNumeric = langx.isNumber;
 
 	    $.inArray = langx.inArray;
 
