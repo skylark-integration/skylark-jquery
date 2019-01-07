@@ -9669,5 +9669,9 @@ define('skylark-jquery/main',[
 
 define('skylark-jquery', ['skylark-jquery/main'], function (main) { return main; });
 
-
+try {
+    require("skylark-jquery");
+} catch(e) {
+    console.error("please use skylark-requirejs");
+}
 },this);

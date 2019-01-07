@@ -25,6 +25,13 @@
     "skylark-langx": "https://github.com/skylarklangx/skylark-langx#master",
     "skylark-utils-dom": "https://github.com/skylarkutils/skylark-utils-dom#master"
   },
+  "skylarkjs" : {
+    "build" : {
+      "bundle" : {
+        "initOnLoad" : true
+      }
+    }
+  },
   "engines": {
     "node": ">=0.8.0"
   }
