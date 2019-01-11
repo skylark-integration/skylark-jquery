@@ -439,6 +439,10 @@ define('skylark-jquery/ajax',[
         if (options.success) {
             p = p.then(options.success,options.error);
         }
+        p.success = p.done;
+        p.error = p.fail;
+        p.complete = p.always;
+        
         return p;
     };
 
@@ -681,15 +685,23 @@ define('skylark-jquery/deferred',[
     "skylark-langx/langx"
 ], function($,langx) {
 
+    langx.Deferred.prototype.notify = langx.Deferred.prototype.progress;
+
     $.Deferred = function() {
         var d = new langx.Deferred(),
-            _p = d.promise;
-        d.promise = function() {
-            return _p;
-        }
-        return d;
-    };
+            ret = {
+                promise : function() {
+                    return d.promise;
+                }
+            };
 
+        ["resolve","resolveWith","reject","rejectWith","notify","then","done","fail","progress"].forEach(function(name){
+            ret[name] = d[name].bind(d);
+        });
+
+        return ret;
+    };
+    
     $.when = function(){
         var p = langx.Deferred.all(langx.makeArray(arguments)),
             originThen = p.then;

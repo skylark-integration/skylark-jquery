@@ -90,6 +90,10 @@ define([
         if (options.success) {
             p = p.then(options.success,options.error);
         }
+        p.success = p.done;
+        p.error = p.fail;
+        p.complete = p.always;
+        
         return p;
     };
 

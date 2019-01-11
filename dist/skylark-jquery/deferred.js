@@ -5,5 +5,5 @@
  * @link www.skylarkjs.org
  * @license MIT
  */
-define(["./core","skylark-langx/langx"],function(n,r){return n.Deferred=function(){var n=new r.Deferred,e=n.promise;return n.promise=function(){return e},n},n.when=function(){var n=r.Deferred.all(r.makeArray(arguments)),e=n.then;return n.then=function(r,t){return e.call(n,function(n){return n=n.map(function(n){return[n]}),r&&r.apply(null,n)},t)},n},n});
+define(["./core","skylark-langx/langx"],function(e,r){return r.Deferred.prototype.notify=r.Deferred.prototype.progress,e.Deferred=function(){var e=new r.Deferred,n={promise:function(){return e.promise}};return["resolve","resolveWith","reject","rejectWith","notify","then","done","fail","progress"].forEach(function(r){n[r]=e[r].bind(e)}),n},e.when=function(){var e=r.Deferred.all(r.makeArray(arguments)),n=e.then;return e.then=function(r,t){return n.call(e,function(e){return e=e.map(function(e){return[e]}),r&&r.apply(null,e)},t)},e},e});
 //# sourceMappingURL=sourcemaps/deferred.js.map

@@ -22,13 +22,13 @@
   "license": "MIT",
   "bugs": "https://github.com/skylarkjs/skylark-jquery/issues",
   "devDependencies": {
-    "skylark-langx": "https://github.com/skylarklangx/skylark-langx#master",
-    "skylark-utils-dom": "https://github.com/skylarkutils/skylark-utils-dom#master"
+    "skylark-langx": "git+https://github.com/skylarklangx/skylark-langx.git#master",
+    "skylark-utils-dom": "git+https://github.com/skylarkutils/skylark-utils-dom.git#master"
   },
-  "skylarkjs" : {
-    "build" : {
-      "bundle" : {
-        "initOnLoad" : true
+  "skylarkjs": {
+    "build": {
+      "bundle": {
+        "initOnLoad": true
       }
     }
   },
