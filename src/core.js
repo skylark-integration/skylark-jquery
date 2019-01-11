@@ -251,6 +251,15 @@ define([
                 return {};
             }
         };
+
+     	var t = $.fn.text;  
+	    $.fn.text = function(v) {
+	        var r = t.apply(this,arguments);
+	        if (r === undefined) {
+	            r = "";
+	        }  
+	        return r;
+	    };       
         	    
     })(query);
 
