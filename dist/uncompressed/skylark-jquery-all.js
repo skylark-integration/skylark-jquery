@@ -2115,9 +2115,9 @@ define('skylark-langx/Deferred',[
 });
 define('skylark-langx/async',[
     "./Deferred",
-    "./arrays"
-],function(Deferred,arrays){
-    var each = arrays.each;
+    "./objects"
+],function(Deferred,objects){
+    var each = objects.each;
     
     var async = {
         parallel : function(arr,args,ctx) {
@@ -2612,7 +2612,7 @@ define('skylark-langx/Xhr',[
     "./funcs",
     "./types"
 ],function(arrays,Deferred,Evented,objects,funcs,types){
-    var each = arrays.each,
+    var each = objects.each,
         mixin = objects.mixin,
         noop = funcs.noop,
         isArray = types.isArray,
@@ -5769,13 +5769,17 @@ define('skylark-utils-dom/datax',[
      * @param {Array} names
      */
     function removeData(elm, names) {
-        if (langx.isString(names)) {
-            names = names.split(/\s+/);
+        if (names) {
+            if (langx.isString(names)) {
+                names = names.split(/\s+/);
+            }
+            var store = _store(elm, true);
+            names.forEach(function(name) {
+                delete store[name];
+            });            
+        } else {
+            cleanData(elm);
         }
-        var store = _store(elm, true);
-        names.forEach(function(name) {
-            delete store[name];
-        });
         return this;
     }
 
@@ -9744,8 +9748,6 @@ define('skylark-jquery/deferred',[
     "skylark-langx/langx"
 ], function($,langx) {
 
-    langx.Deferred.prototype.notify = langx.Deferred.prototype.progress;
-
     $.Deferred = function() {
         var d = new langx.Deferred(),
             ret = {
@@ -10207,5 +10209,9 @@ define('skylark-jquery/main',[
 
 define('skylark-jquery', ['skylark-jquery/main'], function (main) { return main; });
 
-
+try {
+    require("skylark-jquery");
+} catch(e) {
+    console.error("please use skylark-requirejs");
+}
 },this);

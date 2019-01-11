@@ -3,8 +3,6 @@ define([
     "skylark-langx/langx"
 ], function($,langx) {
 
-    langx.Deferred.prototype.notify = langx.Deferred.prototype.progress;
-
     $.Deferred = function() {
         var d = new langx.Deferred(),
             ret = {
