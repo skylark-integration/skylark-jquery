@@ -98,6 +98,8 @@ define('skylark-jquery/core',[
     (function($){
 	    $.fn.jquery = '2.2.0';
 
+	    $.browser = browser;
+	    
 	    $.camelCase = langx.camelCase;
 
 		$.cleanData = function( elems ) {
@@ -703,7 +705,13 @@ define('skylark-jquery/deferred',[
             };
 
         ["resolve","resolveWith","reject","rejectWith","notify","then","done","fail","progress"].forEach(function(name){
-            ret[name] = d[name].bind(d);
+            ret[name] = function() {
+              var ret2 =   d[name].apply(d,arguments);
+              if (ret2 == d) {
+                ret2 = ret;
+              }
+              return ret2;
+            }
         });
 
         return ret;

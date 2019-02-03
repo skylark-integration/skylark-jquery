@@ -16,6 +16,8 @@ define([
     (function($){
 	    $.fn.jquery = '2.2.0';
 
+	    $.browser = browser;
+	    
 	    $.camelCase = langx.camelCase;
 
 		$.cleanData = function( elems ) {
