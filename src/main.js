@@ -3,7 +3,9 @@ define([
     "./ajax",
     "./callbacks",
     "./deferred",
-    "./queue"
+    "./queue",
+    "./JqueryPlugin",
+    "./widget"
 ], function($) {
     return $;
 });
