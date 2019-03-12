@@ -4,6 +4,21 @@ define([
 ], function($,langx) {
     var jsonpID = 0;
 
+     // Attach a bunch of functions for handling common AJAX events
+    $.each( [
+        "ajaxStart",
+        "ajaxStop",
+        "ajaxComplete",
+        "ajaxError",
+        "ajaxSuccess",
+        "ajaxSend"
+    ], function( i, type ) {
+        $.fn[ type ] = function( fn ) {
+            return this.on( type, fn );
+        };
+    } );
+   
+
     function appendQuery(url, query) {
         if (query == '') return url
         return (url + '&' + query).replace(/[&?]{1,2}/, '?')
@@ -86,10 +101,22 @@ define([
             return $.ajaxJSONP(options);
         }
 
-        var p = langx.Xhr.request(options.url,options);
-        if (options.success) {
-            p = p.then(options.success,options.error);
+        function ajaxSucess() {
+            $(document).trigger("ajaxSucess");
+            if (options.success) {
+                options.sucess.apply(this,arguments);
+            }
         }
+
+        function ajaxError() {
+            $(document).trigger("ajaxError");
+            if (options.error) {
+                options.error.apply(this,arguments);
+            }
+        }
+
+        var p = langx.Xhr.request(options.url,options);
+        p = p.then(ajaxSucess,ajaxError);
         p.success = p.done;
         p.error = p.fail;
         p.complete = p.always;

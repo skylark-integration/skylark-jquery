@@ -286,6 +286,50 @@ define('skylark-jquery/core',[
 
         };
 
+        $.speed = function( speed, easing, fn ) {
+            var opt = speed && typeof speed === "object" ? $.extend( {}, speed ) : {
+                complete: fn || !fn && easing ||
+                    $.isFunction( speed ) && speed,
+                duration: speed,
+                easing: fn && easing || easing && !$.isFunction( easing ) && easing
+            };
+
+            // Go to the end state if fx are off
+            if ( $.fx.off ) {
+                opt.duration = 0;
+
+            } else {
+                if ( typeof opt.duration !== "number" ) {
+                    if ( opt.duration in $.fx.speeds ) {
+                        opt.duration = $.fx.speeds[ opt.duration ];
+
+                    } else {
+                        opt.duration = $.fx.speeds._default;
+                    }
+                }
+            }
+
+            // Normalize opt.queue - true/undefined/null -> "fx"
+            if ( opt.queue == null || opt.queue === true ) {
+                opt.queue = "fx";
+            }
+
+            // Queueing
+            opt.old = opt.complete;
+
+            opt.complete = function() {
+                if ( $.isFunction( opt.old ) ) {
+                    opt.old.call( this );
+                }
+
+                if ( opt.queue ) {
+                    $.dequeue( this, opt.queue );
+                }
+            };
+
+            return opt;
+        };
+
         $.easing = {};
 
 	    $.offset = {};
@@ -370,6 +414,21 @@ define('skylark-jquery/ajax',[
 ], function($,langx) {
     var jsonpID = 0;
 
+     // Attach a bunch of functions for handling common AJAX events
+    $.each( [
+        "ajaxStart",
+        "ajaxStop",
+        "ajaxComplete",
+        "ajaxError",
+        "ajaxSuccess",
+        "ajaxSend"
+    ], function( i, type ) {
+        $.fn[ type ] = function( fn ) {
+            return this.on( type, fn );
+        };
+    } );
+   
+
     function appendQuery(url, query) {
         if (query == '') return url
         return (url + '&' + query).replace(/[&?]{1,2}/, '?')
@@ -452,10 +511,22 @@ define('skylark-jquery/ajax',[
             return $.ajaxJSONP(options);
         }
 
-        var p = langx.Xhr.request(options.url,options);
-        if (options.success) {
-            p = p.then(options.success,options.error);
+        function ajaxSucess() {
+            $(document).trigger("ajaxSucess");
+            if (options.success) {
+                options.sucess.apply(this,arguments);
+            }
         }
+
+        function ajaxError() {
+            $(document).trigger("ajaxError");
+            if (options.error) {
+                options.error.apply(this,arguments);
+            }
+        }
+
+        var p = langx.Xhr.request(options.url,options);
+        p = p.then(ajaxSucess,ajaxError);
         p.success = p.done;
         p.error = p.fail;
         p.complete = p.always;
@@ -728,9 +799,9 @@ define('skylark-jquery/deferred',[
             originThen = p.then;
         p.then = function(onResolved,onRejected) {
             var handler = function(results) {
-                results = results.map(function(result){
-                    return [result];
-                });
+                //results = results.map(function(result){
+                //    return [result];
+                //});
                 return onResolved && onResolved.apply(null,results);
             };
             return originThen.call(p,handler,onRejected);

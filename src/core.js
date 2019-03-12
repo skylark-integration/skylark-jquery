@@ -198,6 +198,50 @@ define([
 
         };
 
+        $.speed = function( speed, easing, fn ) {
+            var opt = speed && typeof speed === "object" ? $.extend( {}, speed ) : {
+                complete: fn || !fn && easing ||
+                    $.isFunction( speed ) && speed,
+                duration: speed,
+                easing: fn && easing || easing && !$.isFunction( easing ) && easing
+            };
+
+            // Go to the end state if fx are off
+            if ( $.fx.off ) {
+                opt.duration = 0;
+
+            } else {
+                if ( typeof opt.duration !== "number" ) {
+                    if ( opt.duration in $.fx.speeds ) {
+                        opt.duration = $.fx.speeds[ opt.duration ];
+
+                    } else {
+                        opt.duration = $.fx.speeds._default;
+                    }
+                }
+            }
+
+            // Normalize opt.queue - true/undefined/null -> "fx"
+            if ( opt.queue == null || opt.queue === true ) {
+                opt.queue = "fx";
+            }
+
+            // Queueing
+            opt.old = opt.complete;
+
+            opt.complete = function() {
+                if ( $.isFunction( opt.old ) ) {
+                    opt.old.call( this );
+                }
+
+                if ( opt.queue ) {
+                    $.dequeue( this, opt.queue );
+                }
+            };
+
+            return opt;
+        };
+
         $.easing = {};
 
 	    $.offset = {};
