@@ -511,10 +511,10 @@ define('skylark-jquery/ajax',[
             return $.ajaxJSONP(options);
         }
 
-        function ajaxSucess() {
+        function ajaxSuccess() {
             $(document).trigger("ajaxSucess");
             if (options.success) {
-                options.sucess.apply(this,arguments);
+                options.success.apply(this,arguments);
             }
         }
 
@@ -526,7 +526,7 @@ define('skylark-jquery/ajax',[
         }
 
         var p = langx.Xhr.request(options.url,options);
-        p = p.then(ajaxSucess,ajaxError);
+        p = p.then(ajaxSuccess,ajaxError);
         p.success = p.done;
         p.error = p.fail;
         p.complete = p.always;
