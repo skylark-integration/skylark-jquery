@@ -81,15 +81,21 @@ define([
         return new window.XMLHttpRequest()
     };
 
-    $.ajax = function(options) {
-        if (!options) {
+    $.ajax = function(url,options) {
+        if (!url) {
             options = {
                 url :  "./"
             };
-        } else if (langx.isString(options)) {
-            options = {
-                url :  options
-            };
+        } else if (!options) {
+            if (langx.isString(url)) {
+                options = {
+                    url :  url
+                };
+            } else {
+                options = url;
+            }
+        } else {
+            options.url = url;
         }
 
         if ('jsonp' == options.dataType) {
@@ -101,11 +107,12 @@ define([
             return $.ajaxJSONP(options);
         }
 
-        function ajaxSuccess() {
+        function ajaxSuccess(data,status,xhr) {
             $(document).trigger("ajaxSucess");
             if (options.success) {
                 options.success.apply(this,arguments);
             }
+            return data;
         }
 
         function ajaxError() {
@@ -224,6 +231,10 @@ define([
     $.ajaxTransport = addToPrefiltersOrTransports(transports);
     $.ajaxSetup = function(target, settings) {
         langx.mixin(langx.Xhr.defaultOptions,target,settings);
+    };
+
+    $.getScript = function( url, callback ) {
+        return $.get( url, undefined, callback, "script" );
     };
 
     return $;
