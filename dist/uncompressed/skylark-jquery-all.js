@@ -2771,6 +2771,21 @@ define('skylark-langx/hoster',[
 });
 define('skylark-langx/strings',[
 ],function(){
+    // add default escape function for escaping HTML entities
+    var escapeCharMap = freeze({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#x27;',
+        '`': '&#x60;',
+        '=': '&#x3D;',
+    });
+    function replaceChar(c) {
+        return escapeCharMap[c];
+    }
+    var escapeChars = /[&<>"'`=]/g;
+
 
      /*
      * Converts camel case into dashes.
@@ -2800,10 +2815,22 @@ define('skylark-langx/strings',[
         }
     }
 
+    function escapeHTML(str) {
+        if (str == null) {
+            return '';
+        }
+        if (!str) {
+            return String(str);
+        }
+
+        return str.toString().replace(escapeChars, replaceChar);
+    }
+
 
     function trim(str) {
         return str == null ? "" : String.prototype.trim.call(str);
     }
+
     function substitute( /*String*/ template,
         /*Object|Array*/
         map,
@@ -2863,6 +2890,100 @@ define('skylark-langx/strings',[
         return prefix ? prefix + id : id;
     }
 
+
+    /**
+     * https://github.com/cho45/micro-template.js
+     * (c) cho45 http://cho45.github.com/mit-license
+     */
+    function template (id, data) {
+
+        function include(name, args) {
+            var stash = {};
+            for (var key in template.context.stash) if (template.context.stash.hasOwnProperty(key)) {
+                stash[key] = template.context.stash[key];
+            }
+            if (args) for (var key in args) if (args.hasOwnProperty(key)) {
+                stash[key] = args[key];
+            }
+            var context = template.context;
+            context.ret += template(name, stash);
+            template.context = context;
+        }
+
+        function wrapper(name, fun) {
+            var current = template.context.ret;
+            template.context.ret = '';
+            fun.apply(template.context);
+            var content = template.context.ret;
+            var orig_content = template.context.stash.content;
+            template.context.stash.content = content;
+            template.context.ret = current + template(name, template.context.stash);
+            template.context.stash.content = orig_content;
+        }
+
+        var me = arguments.callee;
+        if (!me.cache[id]) me.cache[id] = (function () {
+            var name = id, string = /^[\w\-]+$/.test(id) ? me.get(id): (name = 'template(string)', id); // no warnings
+            var line = 1, body = (
+                "try { " +
+                    (me.variable ?  "var " + me.variable + " = this.stash;" : "with (this.stash) { ") +
+                        "this.ret += '"  +
+                        string.
+                            replace(/<%/g, '\x11').replace(/%>/g, '\x13'). // if you want other tag, just edit this line
+                            replace(/'(?![^\x11\x13]+?\x13)/g, '\\x27').
+                            replace(/^\s*|\s*$/g, '').
+                            replace(/\n|\r\n/g, function () { return "';\nthis.line = " + (++line) + "; this.ret += '\\n" }).
+                            replace(/\x11=raw(.+?)\x13/g, "' + ($1) + '").
+                            replace(/\x11=(.+?)\x13/g, "' + this.escapeHTML($1) + '").
+                            replace(/\x11(.+?)\x13/g, "'; $1; this.ret += '") +
+                    "'; " + (me.variable ? "" : "}") + "return this.ret;" +
+                "} catch (e) { throw 'TemplateError: ' + e + ' (on " + name + "' + ' line ' + this.line + ')'; } " +
+                "//@ sourceURL=" + name + "\n" // source map
+            ).replace(/this\.ret \+= '';/g, '');
+            var func = new Function(body);
+            var map  = { '&' : '&amp;', '<' : '&lt;', '>' : '&gt;', '\x22' : '&#x22;', '\x27' : '&#x27;' };
+            var escapeHTML = function (string) { return (''+string).replace(/[&<>\'\"]/g, function (_) { return map[_] }) };
+            return function (stash) { return func.call(me.context = { escapeHTML: escapeHTML, line: 1, ret : '', stash: stash }) };
+        })();
+        return data ? me.cache[id](data) : me.cache[id];
+    }
+
+    template.cache = {};
+    
+
+    template.get = function (id) {
+        return document.getElementById(id).innerHTML;
+    };
+
+    function rtrim(str) {
+        return str.replace(/\s+$/g, '');
+    }
+
+    // return boolean if string 'true' or string 'false', or if a parsable string which is a number
+    // also supports JSON object and/or arrays parsing
+    function toType(str) {
+        var type = typeof str;
+        if (type !== 'string') {
+            return str;
+        }
+        var nb = parseFloat(str);
+        if (!isNaN(nb) && isFinite(str)) {
+            return nb;
+        }
+        if (str === 'false') {
+            return false;
+        }
+        if (str === 'true') {
+            return true;
+        }
+
+        try {
+            str = JSON.parse(str);
+        } catch (e) {}
+
+        return str;
+    }
+
 	return {
         camelCase: function(str) {
             return str.replace(/-([\da-z])/g, function(a) {
@@ -2874,16 +2995,22 @@ define('skylark-langx/strings',[
 
         deserializeValue: deserializeValue,
 
+        escapeHTML : escapeHTML,
+
         lowerFirst: function(str) {
             return str.charAt(0).toLowerCase() + str.slice(1);
         },
 
+        rtrim : rtrim,
+        
         serializeValue: function(value) {
             return JSON.stringify(value)
         },
 
 
         substitute: substitute,
+
+        template : template,
 
         trim: trim,
 
