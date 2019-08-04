@@ -522,6 +522,9 @@ define('skylark-jquery/ajax',[
             if (options.success) {
                 options.success.apply(this,arguments);
             }
+            if (options.complete) {
+                options.complete.apply(this,arguments);
+            }
             return data;
         }
 
