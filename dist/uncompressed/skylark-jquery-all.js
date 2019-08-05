@@ -546,6 +546,8 @@ define('skylark-langx/arrays',[
         
         flatten: flatten,
 
+        grep: grep,
+
         inArray: inArray,
 
         makeArray: makeArray,
