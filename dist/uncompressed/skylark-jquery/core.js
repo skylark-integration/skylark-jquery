@@ -1,14 +1,14 @@
 define([
 	"skylark-langx/skylark",
 	"skylark-langx/langx",
-	"skylark-utils-dom/browser",
-	"skylark-utils-dom/noder",
-	"skylark-utils-dom/datax",
-	"skylark-utils-dom/eventer",
-	"skylark-utils-dom/finder",
-	"skylark-utils-dom/fx",
-	"skylark-utils-dom/styler",
-	"skylark-utils-dom/query"
+	"skylark-domx-browser",
+	"skylark-domx-noder",
+	"skylark-domx-data",
+	"skylark-domx-eventer",
+	"skylark-domx-finder",
+	"skylark-domx-fx",
+	"skylark-domx-styler",
+	"skylark-domx-query"
 ],function(skylark,langx,browser,noder,datax,eventer,finder,fx,styler,query){
 	var filter = Array.prototype.filter,
 		slice = Array.prototype.slice;

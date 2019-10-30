@@ -89,14 +89,14 @@
 define('skylark-jquery/core',[
 	"skylark-langx/skylark",
 	"skylark-langx/langx",
-	"skylark-utils-dom/browser",
-	"skylark-utils-dom/noder",
-	"skylark-utils-dom/datax",
-	"skylark-utils-dom/eventer",
-	"skylark-utils-dom/finder",
-	"skylark-utils-dom/fx",
-	"skylark-utils-dom/styler",
-	"skylark-utils-dom/query"
+	"skylark-domx-browser",
+	"skylark-domx-noder",
+	"skylark-domx-data",
+	"skylark-domx-eventer",
+	"skylark-domx-finder",
+	"skylark-domx-fx",
+	"skylark-domx-styler",
+	"skylark-domx-query"
 ],function(skylark,langx,browser,noder,datax,eventer,finder,fx,styler,query){
 	var filter = Array.prototype.filter,
 		slice = Array.prototype.slice;
@@ -409,9 +409,10 @@ define('skylark-jquery/core',[
 });
 
 define('skylark-jquery/ajax',[
+    "skylark-langx/langx",
+    "skylark-net-http/Xhr",
     "./core",
-    "skylark-langx/langx"
-], function($,langx) {
+], function(langx,Xhr,$) {
     var jsonpID = 0;
 
      // Attach a bunch of functions for handling common AJAX events
@@ -485,7 +486,7 @@ define('skylark-jquery/ajax',[
         return deferred;
     }
 
-    $.ajaxSettings = langx.Xhr.defaultOptions;
+    $.ajaxSettings = Xhr.defaultOptions;
 
     $.ajaxSettings.xhr = function() {
         return new window.XMLHttpRequest()
@@ -535,7 +536,7 @@ define('skylark-jquery/ajax',[
             }
         }
 
-        var p = langx.Xhr.request(options.url,options);
+        var p = Xhr.request(options.url,options);
         p = p.then(ajaxSuccess,ajaxError);
         p.success = p.done;
         p.error = p.fail;
@@ -598,7 +599,7 @@ define('skylark-jquery/ajax',[
         return this
     }
 
-    $.param = langx.Xhr.param;
+    $.param = Xhr.param;
 
 
     // Base "constructor" for jQuery.ajaxPrefilter and jQuery.ajaxTransport
@@ -643,7 +644,7 @@ define('skylark-jquery/ajax',[
     $.ajaxPrefilter = addToPrefiltersOrTransports(prefilters);
     $.ajaxTransport = addToPrefiltersOrTransports(transports);
     $.ajaxSetup = function(target, settings) {
-        langx.mixin(langx.Xhr.defaultOptions,target,settings);
+        langx.mixin(Xhr.defaultOptions,target,settings);
     };
 
     $.getScript = function( url, callback ) {
@@ -1243,14 +1244,14 @@ define('skylark-jquery/queue',[
 });
 
 define('skylark-jquery/JqueryPlugin',[
-	"skylark-langx/types",
-	"skylark-langx/objects",
-	"skylark-langx/arrays",
+	"skylark-langx-types",
+	"skylark-langx-objects",
+	"skylark-langx-arrays",
 	"skylark-langx/langx",
-	"skylark-utils-dom/datax",
-	"skylark-utils-dom/eventer",
-	"skylark-utils-dom/plugins",
-	"skylark-utils-dom/query",
+	"skylark-domx-data",
+	"skylark-domx-eventer",
+	"skylark-domx-plugins",
+	"skylark-domx-query",
 ],function(types, objects, arrays, langx, datax, eventer, plugins, $){
 
     var pluginUuid = 0;
@@ -1538,7 +1539,7 @@ define('skylark-jquery/JqueryPlugin',[
 
 define( 'skylark-jquery/widget',[ 
 	"skylark-langx/langx",
-	"skylark-utils-dom/plugins",
+	"skylark-domx-plugins",
 	"./core",
 	"./JqueryPlugin"
 ],  function(langx,splugins, $,JqPlugin ) {

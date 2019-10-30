@@ -1,7 +1,8 @@
 define([
+    "skylark-langx/langx",
+    "skylark-net-http/Xhr",
     "./core",
-    "skylark-langx/langx"
-], function($,langx) {
+], function(langx,Xhr,$) {
     var jsonpID = 0;
 
      // Attach a bunch of functions for handling common AJAX events
@@ -75,7 +76,7 @@ define([
         return deferred;
     }
 
-    $.ajaxSettings = langx.Xhr.defaultOptions;
+    $.ajaxSettings = Xhr.defaultOptions;
 
     $.ajaxSettings.xhr = function() {
         return new window.XMLHttpRequest()
@@ -125,7 +126,7 @@ define([
             }
         }
 
-        var p = langx.Xhr.request(options.url,options);
+        var p = Xhr.request(options.url,options);
         p = p.then(ajaxSuccess,ajaxError);
         p.success = p.done;
         p.error = p.fail;
@@ -188,7 +189,7 @@ define([
         return this
     }
 
-    $.param = langx.Xhr.param;
+    $.param = Xhr.param;
 
 
     // Base "constructor" for jQuery.ajaxPrefilter and jQuery.ajaxTransport
@@ -233,7 +234,7 @@ define([
     $.ajaxPrefilter = addToPrefiltersOrTransports(prefilters);
     $.ajaxTransport = addToPrefiltersOrTransports(transports);
     $.ajaxSetup = function(target, settings) {
-        langx.mixin(langx.Xhr.defaultOptions,target,settings);
+        langx.mixin(Xhr.defaultOptions,target,settings);
     };
 
     $.getScript = function( url, callback ) {

@@ -1,12 +1,12 @@
 define([
-	"skylark-langx/types",
-	"skylark-langx/objects",
-	"skylark-langx/arrays",
+	"skylark-langx-types",
+	"skylark-langx-objects",
+	"skylark-langx-arrays",
 	"skylark-langx/langx",
-	"skylark-utils-dom/datax",
-	"skylark-utils-dom/eventer",
-	"skylark-utils-dom/plugins",
-	"skylark-utils-dom/query",
+	"skylark-domx-data",
+	"skylark-domx-eventer",
+	"skylark-domx-plugins",
+	"skylark-domx-query",
 ],function(types, objects, arrays, langx, datax, eventer, plugins, $){
 
     var pluginUuid = 0;
