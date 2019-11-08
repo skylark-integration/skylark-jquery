@@ -394,6 +394,8 @@ define('skylark-jquery/core',[
 	        }  
 	        return r;
 	    };       
+
+	    $.fn.pos = $.fn.position;
         	    
     })(query);
 

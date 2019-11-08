@@ -306,6 +306,8 @@ define([
 	        }  
 	        return r;
 	    };       
+
+	    $.fn.pos = $.fn.position;
         	    
     })(query);
 

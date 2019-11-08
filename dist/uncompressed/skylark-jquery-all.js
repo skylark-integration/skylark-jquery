@@ -6419,7 +6419,7 @@ define('skylark-domx-query/query',[
 
             empty: wrapper_every_act(noder.empty, noder),
 
-            html: wrapper_every_act(noder.html, noder),
+            html: wrapper_value(noder.html, noder),
 
             // `pluck` is borrowed from Prototype.js
             pluck: function(property) {
@@ -9152,10 +9152,11 @@ define('skylark-domx-geom/geom',[
     return skylark.attach("domx.geom", geom);
 });
 define('skylark-domx-geom/main',[
+    "skylark-langx/langx",
     "./geom",
     "skylark-domx-velm",
     "skylark-domx-query"        
-],function(geom,velm,$){
+],function(langx,geom,velm,$){
    // from ./geom
     velm.delegate([
         "borderExtents",
@@ -10252,6 +10253,8 @@ define('skylark-jquery/core',[
 	        }  
 	        return r;
 	    };       
+
+	    $.fn.pos = $.fn.position;
         	    
     })(query);
 
@@ -10344,7 +10347,7 @@ define('skylark-net-http/Xhr',[
             // Default timeout
             timeout: 0,
             // Whether data should be serialized to string
-            processData: true,
+            processData: false,
             // Whether the browser should be allowed to cache GET responses
             cache: true,
 
@@ -10537,7 +10540,7 @@ define('skylark-net-http/Xhr',[
                         var value = headers[key];
  
                         if(key.toLowerCase() === 'content-type'){
-                            contentType = headers[hdr];
+                            contentType = value;
                         } else {
                            xhr.setRequestHeader(key, value);
                         }
