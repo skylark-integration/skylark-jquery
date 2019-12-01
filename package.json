@@ -25,6 +25,7 @@
     "skylark-domx-data": "git+https://github.com/skylark-domx/skylark-domx-data.git#master",
     "skylark-domx-eventer": "git+https://github.com/skylark-domx/skylark-domx-eventer.git#master",
     "skylark-domx-finder": "git+https://github.com/skylark-domx/skylark-domx-finder.git#master",
+    "skylark-domx-forms": "git+https://github.com/skylark-domx/skylark-domx-forms.git#master",
     "skylark-domx-fx": "git+https://github.com/skylark-domx/skylark-domx-fx.git#master",
     "skylark-domx-geom": "git+https://github.com/skylark-domx/skylark-domx-geom.git#master",
     "skylark-domx-noder": "git+https://github.com/skylark-domx/skylark-domx-noder.git#master",

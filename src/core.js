@@ -6,10 +6,11 @@ define([
 	"skylark-domx-data",
 	"skylark-domx-eventer",
 	"skylark-domx-finder",
+	"skylark-domx-forms",
 	"skylark-domx-fx",
 	"skylark-domx-styler",
 	"skylark-domx-query"
-],function(skylark,langx,browser,noder,datax,eventer,finder,fx,styler,query){
+],function(skylark,langx,browser,noder,datax,eventer,finder,forms,fx,styler,query){
 	var filter = Array.prototype.filter,
 		slice = Array.prototype.slice;
 
@@ -71,29 +72,7 @@ define([
 	        langx.mixin($.fn, props);
 	    };
 
-	    $.fn.serializeArray = function() {
-	        var name, type, result = [],
-	            add = function(value) {
-	                if (value.forEach) return value.forEach(add)
-	                result.push({ name: name, value: value })
-	            }
-	        if (this[0]) langx.each(this[0].elements, function(_, field) {
-	            type = field.type, name = field.name
-	            if (name && field.nodeName.toLowerCase() != 'fieldset' &&
-	                !field.disabled && type != 'submit' && type != 'reset' && type != 'button' && type != 'file' &&
-	                ((type != 'radio' && type != 'checkbox') || field.checked))
-	                add($(field).val())
-	        })
-	        return result
-	    };
 
-	    $.fn.serialize = function() {
-	        var result = []
-	        this.serializeArray().forEach(function(elm) {
-	            result.push(encodeURIComponent(elm.name) + '=' + encodeURIComponent(elm.value))
-	        })
-	        return result.join('&')
-	    };
     })(query);
 
     (function($){
