@@ -467,11 +467,15 @@ define('skylark-jquery/ajax',[
         return deferred;
     }
 
-    $.ajaxSettings = Xhr.defaultOptions;
+    //$.ajaxSettings = Xhr.defaultOptions;
+    //$.ajaxSettings.xhr = function() {
+    //    return new window.XMLHttpRequest()
+    //};
 
-    $.ajaxSettings.xhr = function() {
-        return new window.XMLHttpRequest()
+    $.ajaxSettings = {
+        processData : true
     };
+
 
     $.ajax = function(url,options) {
         if (!url) {
@@ -489,6 +493,8 @@ define('skylark-jquery/ajax',[
         } else {
             options.url = url;
         }
+
+        options = langx.mixin({},$.ajaxSettings,options);
 
         if ('jsonp' == options.dataType) {
             var hasPlaceholder = /\?.+=\?/.test(options.url);
@@ -571,6 +577,10 @@ define('skylark-jquery/ajax',[
             selector,
             callback = options.success
         if (parts && parts.length > 1) options.url = parts[0], selector = parts[1]
+
+        if (options.data && typeof options.data === "object") {
+            options.type = "POST";
+        }
         options.success = function(response) {
             self.html(selector ?
                 $('<div>').html(response.replace(rscript, "")).find(selector) : response)
