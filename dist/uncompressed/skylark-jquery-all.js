@@ -8072,8 +8072,9 @@ define('skylark-domx-forms/serializeObject',[
 });  
 define('skylark-domx-forms/serialize',[
   "skylark-langx/langx",
-  "./forms"
-],function(langx,forms){
+  "./forms",
+  "./serializeArray"
+],function(langx,forms,serializeArray){
     function serialize(formElm) {
         var result = []
         serializeArray(formElm).forEach(function(elm) {
@@ -12188,9 +12189,6 @@ define('skylark-jquery/JqueryPlugin',[
             //this.options = langx.mixin( {}, this.options );
 
             element = $( element || this.defaultElement || this )[ 0 ];
-
-            this.overrided(element,options);
-            
             this.element = $( element );
             this.uuid = pluginUuid++;
             this.eventNamespace = "." + this.pluginName + this.uuid;
@@ -12220,6 +12218,8 @@ define('skylark-jquery/JqueryPlugin',[
                 this.window = $( this.document[ 0 ].defaultView || this.document[ 0 ].parentWindow );
             }
 
+            this.overrided(element,options);
+
 //            this.options = langx.mixin( {},
 //                this.options,
 //                this._getCreateOptions(),
@@ -12232,11 +12232,30 @@ define('skylark-jquery/JqueryPlugin',[
             this._init();
         },
 
-//        _getCreateOptions: function() {
-//            return {};
-//        },
+
+	     _initOptions : function(options) {
+	     	options = langx.mixin(this._getCreateOptions(),options);
+
+			this.overrided(options);
+		},
+
+        _getCreateOptions: function() {
+            return {};
+        },
 
         _getCreateEventData: langx.noop,
+
+		_super : function() {
+			if (this.overrided) {
+				return this.overrided.apply(this,arguments);
+			}
+		},
+
+		_superApply : function ( args ) {
+			if (this.overrided) {
+				return this.overrided.apply(this,args);
+			}
+		},
 
         _create: langx.noop,
 
@@ -12686,33 +12705,9 @@ define( 'skylark-jquery/widget',[
 			create: null
 		},
 
-	     _initOptions : function(options) {
-	     	options = langx.mixin(this._createOptions(),options);
-
-			this.overrided(options);
-		},
-
-		_createOptions : function() {
-			return {};
-		},
-
-		_super : function() {
-			if (this.overrided) {
-				return this.overrided.apply(this,arguments);
-			}
-		},
-
-		_superApply : function ( args ) {
-			if (this.overrided) {
-				return this.overrided.apply(this,args);
-			}
-		},
-
-
 		widget: function() {
 			return this.element;
 		},
-
 
 		_setOption: function( key, value ) {
 			if ( key === "classes" ) {

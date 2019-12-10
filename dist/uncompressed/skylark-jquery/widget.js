@@ -256,33 +256,9 @@ define( [
 			create: null
 		},
 
-	     _initOptions : function(options) {
-	     	options = langx.mixin(this._createOptions(),options);
-
-			this.overrided(options);
-		},
-
-		_createOptions : function() {
-			return {};
-		},
-
-		_super : function() {
-			if (this.overrided) {
-				return this.overrided.apply(this,arguments);
-			}
-		},
-
-		_superApply : function ( args ) {
-			if (this.overrided) {
-				return this.overrided.apply(this,args);
-			}
-		},
-
-
 		widget: function() {
 			return this.element;
 		},
-
 
 		_setOption: function( key, value ) {
 			if ( key === "classes" ) {

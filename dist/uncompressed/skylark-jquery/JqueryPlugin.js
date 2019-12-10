@@ -37,9 +37,6 @@ define([
             //this.options = langx.mixin( {}, this.options );
 
             element = $( element || this.defaultElement || this )[ 0 ];
-
-            this.overrided(element,options);
-            
             this.element = $( element );
             this.uuid = pluginUuid++;
             this.eventNamespace = "." + this.pluginName + this.uuid;
@@ -69,6 +66,8 @@ define([
                 this.window = $( this.document[ 0 ].defaultView || this.document[ 0 ].parentWindow );
             }
 
+            this.overrided(element,options);
+
 //            this.options = langx.mixin( {},
 //                this.options,
 //                this._getCreateOptions(),
@@ -81,11 +80,30 @@ define([
             this._init();
         },
 
-//        _getCreateOptions: function() {
-//            return {};
-//        },
+
+	     _initOptions : function(options) {
+	     	options = langx.mixin(this._getCreateOptions(),options);
+
+			this.overrided(options);
+		},
+
+        _getCreateOptions: function() {
+            return {};
+        },
 
         _getCreateEventData: langx.noop,
+
+		_super : function() {
+			if (this.overrided) {
+				return this.overrided.apply(this,arguments);
+			}
+		},
+
+		_superApply : function ( args ) {
+			if (this.overrided) {
+				return this.overrided.apply(this,args);
+			}
+		},
 
         _create: langx.noop,
 
