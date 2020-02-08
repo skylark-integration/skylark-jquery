@@ -9,8 +9,9 @@ define([
 	"skylark-domx-forms",
 	"skylark-domx-fx",
 	"skylark-domx-styler",
-	"skylark-domx-query"
-],function(skylark,langx,browser,noder,datax,eventer,finder,forms,fx,styler,query){
+	"skylark-domx-query",
+	"skylark-domx-scripter"
+],function(skylark,langx,browser,noder,datax,eventer,finder,forms,fx,styler,query,scripter){
 	var filter = Array.prototype.filter,
 		slice = Array.prototype.slice;
 
