@@ -11061,7 +11061,7 @@ define('skylark-net-http/Xhr',[
                     user = options.user , 
                     password = options.password,
                     deferred = new Deferred(),
-                    contentType = isFormData ? false : 'application/x-www-form-urlencoded';
+                    contentType = options.contentType || (isFormData ? false : 'application/x-www-form-urlencoded');
 
                 if (xhrFields) {
                     for (name in xhrFields) {
