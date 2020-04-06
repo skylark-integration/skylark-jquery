@@ -788,7 +788,7 @@ define('skylark-jquery/deferred',[
                 }
             };
 
-        ["resolve","resolveWith","reject","rejectWith","notify","then","done","fail","progress"].forEach(function(name){
+        ["resolve","resolveWith","reject","rejectWith","notify","then","done","fail","progress","always"].forEach(function(name){
             ret[name] = function() {
               var ret2 =   d[name].apply(d,arguments);
               if (ret2 == d) {
@@ -1526,7 +1526,17 @@ define('skylark-jquery/JqueryPlugin',[
 			return !( types.isFunction( callback ) &&
 				callback.apply( this.element[ 0 ], [ event ].concat( data ) ) === false ||
 				event.isDefaultPrevented() );
-		}
+		},
+
+
+	    enable: function() {
+	      return this._setOptions( { disabled: false } );
+	    },
+
+	    disable: function() {
+	      return this._setOptions( { disabled: true } );
+	    }
+
 
 	});
 

@@ -289,7 +289,17 @@ define([
 			return !( types.isFunction( callback ) &&
 				callback.apply( this.element[ 0 ], [ event ].concat( data ) ) === false ||
 				event.isDefaultPrevented() );
-		}
+		},
+
+
+	    enable: function() {
+	      return this._setOptions( { disabled: false } );
+	    },
+
+	    disable: function() {
+	      return this._setOptions( { disabled: true } );
+	    }
+
 
 	});
 
