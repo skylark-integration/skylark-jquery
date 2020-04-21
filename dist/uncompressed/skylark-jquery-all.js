@@ -2283,96 +2283,93 @@ define('skylark-langx-async/Deferred',[
 
    
     function makePromise2(promise) {
-      // Don't modify any promise that has been already modified.
-      if (promise.isResolved) return promise;
+        // Don't modify any promise that has been already modified.
+        if (promise.isResolved) return promise;
 
-      // Set initial state
-      var isPending = true;
-      var isRejected = false;
-      var isResolved = false;
+        // Set initial state
+        var isPending = true;
+        var isRejected = false;
+        var isResolved = false;
 
-      // Observe the promise, saving the fulfillment in a closure scope.
-      var result = promise.then(
-          function(v) {
-              isResolved = true;
-              isPending = false;
-              return v; 
-          }, 
-          function(e) {
-              isRejected = true;
-              isPending = false;
-              throw e; 
-          }
-      );
+        // Observe the promise, saving the fulfillment in a closure scope.
+        var result = promise.then(
+            function(v) {
+                isResolved = true;
+                isPending = false;
+                return v; 
+            }, 
+            function(e) {
+                isRejected = true;
+                isPending = false;
+                throw e; 
+            }
+        );
 
-      result.isResolved = function() { return isResolved; };
-      result.isPending = function() { return isPending; };
-      result.isRejected = function() { return isRejected; };
+        result.isResolved = function() { return isResolved; };
+        result.isPending = function() { return isPending; };
+        result.isRejected = function() { return isRejected; };
 
+        result.state = function() {
+            if (isResolved) {
+                return 'resolved';
+            }
+            if (isRejected) {
+                return 'rejected';
+            }
+            return 'pending';
+        };
 
-      result.state = function() {
-                if (isResolved) {
-                    return 'resolved';
-                }
-                if (isRejected) {
-                    return 'rejected';
-                }
-                return 'pending';
-      };
-
-      var notified = [],
-          listeners = [];
+        var notified = [],
+            listeners = [];
 
           
-      result.then = function(onResolved,onRejected,onProgress) {
-                    if (onProgress) {
-                        this.progress(onProgress);
+        result.then = function(onResolved,onRejected,onProgress) {
+            if (onProgress) {
+                this.progress(onProgress);
+            }
+            return makePromise2(Promise.prototype.then.call(this,
+                onResolved && function(args) {
+                    if (args && args.__ctx__ !== undefined) {
+                        return onResolved.apply(args.__ctx__,args);
+                    } else {
+                        return onResolved(args);
                     }
-                    return makePromise2(Promise.prototype.then.call(this,
-                            onResolved && function(args) {
-                                if (args && args.__ctx__ !== undefined) {
-                                    return onResolved.apply(args.__ctx__,args);
-                                } else {
-                                    return onResolved(args);
-                                }
-                            },
-                            onRejected && function(args){
-                                if (args && args.__ctx__ !== undefined) {
-                                    return onRejected.apply(args.__ctx__,args);
-                                } else {
-                                    return onRejected(args);
-                                }
-                            }
-                          )
-                    );
-      };
+                },
+                onRejected && function(args){
+                    if (args && args.__ctx__ !== undefined) {
+                        return onRejected.apply(args.__ctx__,args);
+                    } else {
+                        return onRejected(args);
+                    }
+                }
+            ));
+        };
 
-      result.progress = function(handler) {
-                    notified.forEach(function (value) {
-                        handler(value);
-                    });
-                    listeners.push(handler);
-                    return this;
-      };
-
-      result.pipe = result.then;
-
-      result.notify = function(value) {
-        try {
-           notified.push(value);
-
-            return listeners.forEach(function (listener) {
-                return listener(value);
+        result.progress = function(handler) {
+            notified.forEach(function (value) {
+                handler(value);
             });
-        } catch (error) {
-          this.reject(error);
-        }
-        return this;
-     };
+            listeners.push(handler);
+            return this;
+        };
 
-      return result;
-   }
+        result.pipe = result.then;
 
+        result.notify = function(value) {
+            try {
+                notified.push(value);
+
+                return listeners.forEach(function (listener) {
+                    return listener(value);
+                });
+            } catch (error) {
+            this.reject(error);
+            }
+            return this;
+        };
+
+        return result;
+    }
 
  
     Deferred.prototype.resolve = function(value) {
@@ -2417,6 +2414,11 @@ define('skylark-langx-async/Deferred',[
         return p.isRejected();
     };
 
+    Deferred.prototype.state = function() {
+        var p = result(this,"promise");
+        return p.state();
+    };
+
     Deferred.prototype.then = function(callback, errback, progback) {
         var p = result(this,"promise");
         return p.then(callback, errback, progback);
@@ -2435,17 +2437,20 @@ define('skylark-langx-async/Deferred',[
 
     Deferred.prototype.always  = function() {
         var p = result(this,"promise");
-        return p.always.apply(p,arguments);
+        p.always.apply(p,arguments);
+        return this;
     };
 
     Deferred.prototype.done  = function() {
         var p = result(this,"promise");
-        return p.done.apply(p,arguments);
+        p.done.apply(p,arguments);
+        return this;
     };
 
     Deferred.prototype.fail = function(errback) {
         var p = result(this,"promise");
-        return p.fail(errback);
+        p.fail(errback);
+        return this;
     };
 
 
@@ -2497,8 +2502,16 @@ define('skylark-langx-async/Deferred',[
 
     Deferred.immediate = Deferred.resolve;
 
-    return Deferred;
 
+    Deferred.promise = function(callback) {
+        var d = new Deferred();
+
+        callback(d.resolve.bind(d),d.reject.bind(d),d.progress.bind(d));
+
+        return d.promise;
+    };
+
+    return Deferred;
 });
 define('skylark-langx-async/async',[
     "skylark-langx-ns",
@@ -5854,10 +5867,10 @@ define('skylark-domx-data/data',[
                 }
                 return this;
             } else {
-                return elm.getAttribute(name);
+                return elm.getAttribute ? elm.getAttribute(name) : elm[name];
             }
         } else {
-            elm.setAttribute(name, value);
+            elm.setAttribute ? elm.setAttribute(name, value) : elm[name] = value;
             return this;
         }
     }
@@ -6239,11 +6252,11 @@ define('skylark-domx-query/query',[
             //}
             var result = this.map(function(idx, elem) {
                 // if (elem.nodeType == 1) { // TODO
-                if (elem.querySelector) {
+                //if (elem.querySelector) {
                     return func.apply(context, last ? [elem, util] : [elem, selector, util]);
-                } else {
-                    return [];
-                }
+                //} else {
+                //    return [];
+                //}
             });
             if (last && selector) {
                 return result.filter(selector);
@@ -11789,7 +11802,7 @@ define('skylark-jquery/deferred',[
                 }
             };
 
-        ["resolve","resolveWith","reject","rejectWith","notify","then","done","fail","progress","always"].forEach(function(name){
+        ["resolve","resolveWith","reject","rejectWith","notify","then","done","fail","progress","always","state"].forEach(function(name){
             ret[name] = function() {
               var ret2 =   d[name].apply(d,arguments);
               if (ret2 == d) {

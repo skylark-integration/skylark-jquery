@@ -788,7 +788,7 @@ define('skylark-jquery/deferred',[
                 }
             };
 
-        ["resolve","resolveWith","reject","rejectWith","notify","then","done","fail","progress","always"].forEach(function(name){
+        ["resolve","resolveWith","reject","rejectWith","notify","then","done","fail","progress","always","state"].forEach(function(name){
             ret[name] = function() {
               var ret2 =   d[name].apply(d,arguments);
               if (ret2 == d) {
