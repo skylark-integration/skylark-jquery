@@ -4,7 +4,7 @@
   "description": "The skylark plugin library for fully compatible API with jquery.",
   "main": "-",
   "scripts": {
-    "build": "sbundle build .",
+    "build": "slib build .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "homepage": "www.skylarkjs.org",
