@@ -38,9 +38,24 @@
     "skylark-net-http": "git+https://github.com/skylark-net/skylark-net-http.git#master"
   },
   "skylarkjs": {
+    "directories": {
+      "dependencies": "./node_modules"
+    },
+    "secondaries": {},
     "build": {
-      "bundle": {
-        "initOnLoad": true
+      "prepare": {
+        "texttojs": [
+          "html",
+          "json",
+          "css"
+        ],
+        "jsxtojs": false,
+        "es6toamd": false,
+        "cjstoamd": false
+      },
+      "bundles": {
+        "initOnLoad": true,
+        "all": true
       }
     }
   },
