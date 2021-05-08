@@ -101,7 +101,8 @@ define('skylark-langx-ns/_attach',[],function(){
             name = path[i++];
         }
 
-        return ns[name] = obj2;
+        ns[name] = obj2 || {};
+        return ns[name];
     }
 });
 define('skylark-langx-ns/ns',[
@@ -10795,10 +10796,21 @@ define('skylark-domx-browser/support/fullscreen',[
 
     return browser.support.fullscreen;
 });
+define('skylark-domx-browser/support/touch',[
+	"../browser"
+],function(browser){
+
+    function supportTouch() {
+        return !!('ontouchstart' in window || window.DocumentTouch && document instanceof window.DocumentTouch);
+    }
+
+    return browser.support.tocuh = supportTouch();
+});
 define('skylark-domx-browser/main',[
 	"./browser",
 	"./support/css3",
-	"./support/fullscreen"
+	"./support/fullscreen",
+	"./support/touch"
 ],function(browser){
 	return browser;
 });
@@ -16141,7 +16153,11 @@ define('skylark-domx-geom/geom',[
         return (cachedScrollbarWidth = w1 - w2);
     }
 
-    
+
+    function hasScrollbar() {
+        return document.body.scrollHeight > (window.innerHeight || document.documentElement.clientHeight);
+    }
+
     /*
      * Get the widths of each border of the specified element.
      * @param {HTMLElement} elm
@@ -16494,14 +16510,21 @@ define('skylark-domx-geom/geom',[
                 left: offset.left - parentOffset.left - pbex.left - mex.left
             }
         } else {
+            var // Get *real* offsetParent
+                parent = offsetParent(elm);
+
             var props = {
-                top: coords.top,
-                left: coords.left
+                top: coords.top + (scrollTop(parent) || 0),
+                left: coords.left + (scrollLeft(parent) || 0)
             }
+
+
 
             if (styler.css(elm, "position") == "static") {
                 props['position'] = "relative";
             }
+
+
             styler.css(elm, props);
             return this;
         }
@@ -16586,6 +16609,8 @@ define('skylark-domx-geom/geom',[
     function scrollLeft(elm, value) {
         if (elm.nodeType === 9) {
             elm = elm.defaultView;
+        } else if (elm == document.body) {
+            elm = document.scrollingElement  || document.documentElement;
         }
         var hasScrollLeft = "scrollLeft" in elm;
         if (value === undefined) {
@@ -16607,7 +16632,10 @@ define('skylark-domx-geom/geom',[
     function scrollTop(elm, value) {
         if (elm.nodeType === 9) {
             elm = elm.defaultView;
+        } else if (elm == document.body) {
+            elm = document.scrollingElement  || document.documentElement;
         }
+
         var hasScrollTop = "scrollTop" in elm;
 
         if (value === undefined) {
@@ -16745,6 +16773,8 @@ define('skylark-domx-geom/geom',[
         contentRect: contentRect,
 
         getDocumentSize: getDocumentSize,
+
+        hasScrollbar,
 
         height: height,
 
@@ -20219,6 +20249,689 @@ define('skylark-jquery/queue',[
 
 });
 
+define('skylark-domx-plugins-base/plugins',[
+    "skylark-langx-ns",
+    "skylark-langx-types",
+    "skylark-langx-objects",
+    "skylark-langx-funcs",
+    "skylark-langx-events/Emitter",
+    "skylark-domx-noder",
+    "skylark-domx-data",
+    "skylark-domx-eventer",
+    "skylark-domx-finder",
+    "skylark-domx-geom",
+    "skylark-domx-styler",
+    "skylark-domx-fx",
+    "skylark-domx-query",
+    "skylark-domx-velm"
+], function(
+    skylark,
+    types,
+    objects,
+    funcs,
+    Emitter, 
+    noder, 
+    datax, 
+    eventer, 
+    finder, 
+    geom, 
+    styler, 
+    fx, 
+    $, 
+    elmx
+) {
+    "use strict";
+
+    var slice = Array.prototype.slice,
+        concat = Array.prototype.concat,
+        pluginKlasses = {},
+        shortcuts = {};
+
+    /*
+     * Create or get or destory a plugin instance assocated with the element.
+     */
+    function instantiate(elm,pluginName,options) {
+        var pair = pluginName.split(":"),
+            instanceDataName = pair[1];
+        pluginName = pair[0];
+
+        if (!instanceDataName) {
+            instanceDataName = pluginName;
+        }
+
+        var pluginInstance = datax.data( elm, instanceDataName );
+
+        if (options === "instance") {
+            return pluginInstance;
+        } else if (options === "destroy") {
+            if (!pluginInstance) {
+                throw new Error ("The plugin instance is not existed");
+            }
+            pluginInstance.destroy();
+            //datax.removeData( elm, pluginName);
+            pluginInstance = undefined;
+        } else {
+            if (!pluginInstance) {
+                if (options !== undefined && typeof options !== "object") {
+                    throw new Error ("The options must be a plain object");
+                }
+                var pluginKlass = pluginKlasses[pluginName]; 
+                pluginInstance = new pluginKlass(elm,options);
+                datax.data( elm, instanceDataName,pluginInstance );
+            } else if (options) {
+                pluginInstance.reset(options);
+            }
+        }
+
+        return pluginInstance;
+    }
+
+
+    function shortcutter(pluginName,extfn) {
+       /*
+        * Create or get or destory a plugin instance assocated with the element,
+        * and also you can execute the plugin method directory;
+        */
+        return function (elm,options) {
+            var  plugin = instantiate(elm, pluginName,"instance");
+            if ( options === "instance" ) {
+              return plugin || null;
+            }
+
+            if (!plugin) {
+                plugin = instantiate(elm, pluginName,typeof options == 'object' && options || {});
+                if (typeof options != "string") {
+                  return this;
+                }
+            } 
+            if (options) {
+                var args = slice.call(arguments,1); //2
+                if (extfn) {
+                    return extfn.apply(plugin,args);
+                } else {
+                    if (typeof options == 'string') {
+                        var methodName = options;
+
+                        if ( !plugin ) {
+                            throw new Error( "cannot call methods on " + pluginName +
+                                " prior to initialization; " +
+                                "attempted to call method '" + methodName + "'" );
+                        }
+
+                        if ( !types.isFunction( plugin[ methodName ] ) || methodName.charAt( 0 ) === "_" ) {
+                            throw new Error( "no such method '" + methodName + "' for " + pluginName +
+                                " plugin instance" );
+                        }
+
+                        args = slice.call(args,1); //remove method name
+
+                        var ret = plugin[methodName].apply(plugin,args);
+                        if (ret == plugin) {
+                          ret = undefined;
+                        }
+
+                        return ret;
+                    }                
+                }                
+            }
+
+        }
+
+    }
+
+    /*
+     * Register a plugin type
+     */
+    function register( pluginKlass,shortcutName,instanceDataName,extfn) {
+        var pluginName = pluginKlass.prototype.pluginName;
+        
+        pluginKlasses[pluginName] = pluginKlass;
+
+        if (shortcutName) {
+            if (instanceDataName && types.isFunction(instanceDataName)) {
+                extfn = instanceDataName;
+                instanceDataName = null;
+            } 
+            if (instanceDataName) {
+                pluginName = pluginName + ":" + instanceDataName;
+            }
+
+            var shortcut = shortcuts[shortcutName] = shortcutter(pluginName,extfn);
+                
+            $.fn[shortcutName] = function(options) {
+                var returnValue = this;
+
+                if ( !this.length && options === "instance" ) {
+                  returnValue = undefined;
+                } else {
+                  var args = slice.call(arguments);
+                  this.each(function () {
+                    var args2 = slice.call(args);
+                    args2.unshift(this);
+                    var  ret  = shortcut.apply(undefined,args2);
+                    if (ret !== undefined) {
+                        returnValue = ret;
+                    }
+                  });
+                }
+
+                return returnValue;
+            };
+
+            elmx.partial(shortcutName,function(options) {
+                var  ret  = shortcut(this._elm,options);
+                if (ret === undefined) {
+                    ret = this;
+                }
+                return ret;
+            });
+
+        }
+    }
+
+    function parentClass(ctor){
+        if (ctor.hasOwnProperty("superclass")) {
+            return ctor.superclass;
+        }
+
+        return Object.getPrototypeOf(ctor);
+    }
+
+ 
+    var Plugin =   Emitter.inherit({
+        klassName: "Plugin",
+
+        _construct : function(elm,options) {
+           this._elm = elm;
+           this._initOptions(options);
+        },
+
+        _initOptions : function(options) {
+          var ctor = this.constructor,
+              cache = ctor.cache = (ctor.hasOwnProperty("cache") ? ctor.cache : {}),
+              defaults = cache.defaults;
+          if (!defaults) {
+            var  ctors = [];
+            do {
+              ctors.unshift(ctor);
+              if (ctor === Plugin) {
+                break;
+              }
+              ctor = parentClass(ctor);
+            } while (ctor);
+
+            defaults = cache.defaults = {};
+            for (var i=0;i<ctors.length;i++) {
+              ctor = ctors[i];
+              if (ctor.prototype.hasOwnProperty("options")) {
+                objects.mixin(defaults,ctor.prototype.options,true);
+              }
+              if (ctor.hasOwnProperty("options")) {
+                objects.mixin(defaults,ctor.options,true);
+              }
+            }
+          }
+          Object.defineProperty(this,"options",{
+            value :objects.mixin({},defaults,options,true)
+          });
+
+          //return this.options = langx.mixin({},defaults,options);
+          return this.options;
+        },
+
+
+        destroy: function() {
+
+            this._destroy();
+
+            // remove all event lisener
+            this.unlistenTo();
+            // remove data 
+            datax.removeData(this._elm,this.pluginName );
+        },
+
+        _destroy: funcs.noop,
+
+        _delay: function( handler, delay ) {
+            function handlerProxy() {
+                return ( typeof handler === "string" ? instance[ handler ] : handler )
+                    .apply( instance, arguments );
+            }
+            var instance = this;
+            return setTimeout( handlerProxy, delay || 0 );
+        },
+
+        elmx : function(elm) {
+            elm = elm || this._elm;
+            return elmx(elm);
+
+        },
+
+        $ : function(elm) {
+            elm = elm || this._elm;
+            return $(elm);
+        },
+
+        option: function( key, value ) {
+            var options = key;
+            var parts;
+            var curOption;
+            var i;
+
+            if ( arguments.length === 0 ) {
+
+                // Don't return a reference to the internal hash
+                return objects.mixin( {}, this.options );
+            }
+
+            if ( typeof key === "string" ) {
+
+                // Handle nested keys, e.g., "foo.bar" => { foo: { bar: ___ } }
+                options = {};
+                parts = key.split( "." );
+                key = parts.shift();
+                if ( parts.length ) {
+                    curOption = options[ key ] = objects.mixin( {}, this.options[ key ] );
+                    for ( i = 0; i < parts.length - 1; i++ ) {
+                        curOption[ parts[ i ] ] = curOption[ parts[ i ] ] || {};
+                        curOption = curOption[ parts[ i ] ];
+                    }
+                    key = parts.pop();
+                    if ( arguments.length === 1 ) {
+                        return curOption[ key ] === undefined ? null : curOption[ key ];
+                    }
+                    curOption[ key ] = value;
+                } else {
+                    if ( arguments.length === 1 ) {
+                        return this.options[ key ] === undefined ? null : this.options[ key ];
+                    }
+                    options[ key ] = value;
+                }
+            }
+
+            this._setOptions( options );
+
+            return this;
+        },
+
+        _setOptions: function( options ) {
+            var key;
+
+            for ( key in options ) {
+                this._setOption( key, options[ key ] );
+            }
+
+            return this;
+        },
+
+        _setOption: function( key, value ) {
+
+            this.options[ key ] = value;
+
+            return this;
+        },
+
+        getUID : function (prefix) {
+            prefix = prefix || "plugin";
+            do prefix += ~~(Math.random() * 1000000)
+            while (document.getElementById(prefix))
+            return prefix;
+        },
+
+        elm : function() {
+            return this._elm;
+        }
+
+    });
+
+    Plugin.instantiate = function(elm,options) {
+        return instantiate(elm,this.prototype.pluginName,options);
+    };
+    
+    $.fn.plugin = function(name,options) {
+        var args = slice.call( arguments, 1 ),
+            self = this,
+            returnValue ;
+
+        this.each(function(){
+            returnValue = instantiate.apply(self,[this,name].concat(args));
+        });
+        return returnValue;
+    };
+
+    elmx.partial("plugin",function(name,options) {
+        var args = slice.call( arguments, 1 );
+        return instantiate.apply(this,[this._elm,name].concat(args));
+    }); 
+
+
+    function plugins() {
+        return plugins;
+    }
+     
+    objects.mixin(plugins, {
+        instantiate,
+        Plugin,
+        register,
+        shortcuts
+    });
+
+    return  skylark.attach("domx.plugins",plugins);
+});
+define('skylark-domx-plugins-base/main',[
+	"./plugins"
+],function(plugins){
+	return plugins;
+});
+define('skylark-domx-plugins-base', ['skylark-domx-plugins-base/main'], function (main) { return main; });
+
+define('skylark-jquery/JqueryPlugin',[
+	"skylark-langx-types",
+	"skylark-langx-objects",
+	"skylark-langx-arrays",
+	"skylark-langx/langx",
+	"skylark-domx-data",
+	"skylark-domx-eventer",
+	"skylark-domx-plugins-base",
+	"skylark-domx-query",
+],function(types, objects, arrays, langx, datax, eventer, plugins, $){
+
+    var pluginUuid = 0;
+
+	var JqPlugin = plugins.Plugin.inherit({
+		klassName : "JqPlugin",
+
+        pluginEventPrefix: "",
+
+        options: {
+            // Callbacks
+            create: null
+        },
+
+        destroy: function() {
+            this.overrided();
+
+            // We can probably remove the unbind calls in 2.0
+            // all event bindings should go through this._on()
+            this.element
+                .off( this.eventNamespace );
+
+            // Clean up events and states
+            this.bindings.off( this.eventNamespace );
+        },
+
+        _construct : function(element,options) {
+            //this.options = langx.mixin( {}, this.options );
+
+            element = $( element || this.defaultElement || this )[ 0 ];
+            this.element = $( element );
+            this.uuid = pluginUuid++;
+            this.eventNamespace = "." + this.pluginName + this.uuid;
+
+            this.bindings = $();
+            this.classesElementLookup = {};
+
+			this.hoverable = $();
+			this.focusable = $();
+
+            if ( element !== this ) {
+                datax.data( element, this.pluginName, this );
+                this._on( true, this.element, {
+                    remove: function( event ) {
+                        if ( event.target === element ) {
+                            this.destroy();
+                        }
+                    }
+                } );
+                this.document = $( element.style ?
+
+                    // Element within the document
+                    element.ownerDocument :
+
+                    // Element is window or document
+                    element.document || element );
+                this.window = $( this.document[ 0 ].defaultView || this.document[ 0 ].parentWindow );
+            }
+
+            this.overrided(element,options);
+
+//            this.options = langx.mixin( {},
+//                this.options,
+//                this._getCreateOptions(),
+//                options );
+
+            this._create();
+
+            this._trigger( "create", null, this._getCreateEventData() );
+
+            this._init();
+        },
+
+
+	     _initOptions : function(options) {
+	     	options = langx.mixin(this._getCreateOptions(),options);
+
+			this.overrided(options);
+		},
+
+        _getCreateOptions: function() {
+            return {};
+        },
+
+        _getCreateEventData: langx.noop,
+
+		_super : function() {
+			if (this.overrided) {
+				return this.overrided.apply(this,arguments);
+			}
+		},
+
+		_superApply : function ( args ) {
+			if (this.overrided) {
+				return this.overrided.apply(this,args);
+			}
+		},
+
+        _create: langx.noop,
+
+        _init: langx.noop,
+
+		_classes: function( options ) {
+			var full = [];
+			var that = this;
+
+			options = objects.mixin( {
+				element: this.element,
+				classes: this.options.classes || {}
+			}, options );
+
+
+			function bindRemoveEvent() {
+				options.element.each( function( _, element ) {
+					var isTracked = langx.map( that.classesElementLookup, function( elements ) {
+						return elements;
+					} )
+						.some( function(elements ) {
+							return $(elements).is( element );
+						} );
+
+					if ( !isTracked ) {
+						that._on( $( element ), {
+							remove: "_untrackClassesElement"
+						} );
+					}
+				} );
+			}
+
+			function processClassString( classes, checkOption ) {
+				var current, i;
+				for ( i = 0; i < classes.length; i++ ) {
+					current = that.classesElementLookup[ classes[ i ] ] || $();
+					if ( options.add ) {
+						bindRemoveEvent();
+						current = $( langx.uniq( current.get().concat( options.element.get() ) ) );
+					} else {
+						current = $( current.not( options.element ).get() );
+					}
+					that.classesElementLookup[ classes[ i ] ] = current;
+					full.push( classes[ i ] );
+					if ( checkOption && options.classes[ classes[ i ] ] ) {
+						full.push( options.classes[ classes[ i ] ] );
+					}
+				}
+			}
+
+			if ( options.keys ) {
+				processClassString( options.keys.match( /\S+/g ) || [], true );
+			}
+			if ( options.extra ) {
+				processClassString( options.extra.match( /\S+/g ) || [] );
+			}
+
+			return full.join( " " );
+		},
+
+		_untrackClassesElement: function( event ) {
+			var that = this;
+			langx.each( that.classesElementLookup, function( key, value ) {
+				if ( arrays.inArray( event.target, value ) !== -1 ) {
+					that.classesElementLookup[ key ] = $( value.not( event.target ).get() );
+				}
+			} );
+
+			this._off( $( event.target ) );
+		},
+
+		_removeClass: function( element, keys, extra ) {
+			return this._toggleClass( element, keys, extra, false );
+		},
+
+		_addClass: function( element, keys, extra ) {
+			return this._toggleClass( element, keys, extra, true );
+		},
+
+		_toggleClass: function( element, keys, extra, add ) {
+			add = ( typeof add === "boolean" ) ? add : extra;
+			var shift = ( typeof element === "string" || element === null ),
+				options = {
+					extra: shift ? keys : extra,
+					keys: shift ? element : keys,
+					element: shift ? this.element : element,
+					add: add
+				};
+			options.element.toggleClass( this._classes( options ), add );
+			return this;
+		},
+
+		_on: function( suppressDisabledCheck, element, handlers ) {
+			var delegateElement;
+			var instance = this;
+
+			// No suppressDisabledCheck flag, shuffle arguments
+			if ( typeof suppressDisabledCheck !== "boolean" ) {
+				handlers = element;
+				element = suppressDisabledCheck;
+				suppressDisabledCheck = false;
+			}
+
+			// No element argument, shuffle and use this.element
+			if ( !handlers ) {
+				handlers = element;
+				element = this.element;
+				delegateElement = this.widget();
+			} else {
+				element = delegateElement = $( element );
+				this.bindings = this.bindings.add( element );
+			}
+
+			objects.each( handlers, function( event, handler ) {
+				function handlerProxy() {
+
+					// Allow widgets to customize the disabled handling
+					// - disabled as an array instead of boolean
+					// - disabled class as method for disabling individual parts
+					if ( !suppressDisabledCheck &&
+							( instance.options.disabled === true ||
+							$( this ).hasClass( "ui-state-disabled" ) ) ) {
+						return;
+					}
+					return ( typeof handler === "string" ? instance[ handler ] : handler )
+						.apply( instance, arguments );
+				}
+
+				// Copy the guid so direct unbinding works
+				if ( typeof handler !== "string" ) {
+					handlerProxy.guid = handler.guid =
+						handler.guid || handlerProxy.guid || $.guid++;
+				}
+
+				var match = event.match( /^([\w:-]*)\s*(.*)$/ );
+				var eventName = match[ 1 ] + instance.eventNamespace;
+				var selector = match[ 2 ];
+
+				if ( selector ) {
+					delegateElement.on( eventName, selector, handlerProxy );
+				} else {
+					element.on( eventName, handlerProxy );
+				}
+			} );
+		},
+
+		_off: function( element, eventName ) {
+			eventName = ( eventName || "" ).split( " " ).join( this.eventNamespace + " " ) +
+				this.eventNamespace;
+			element.off( eventName );
+
+			// Clear the stack to avoid memory leaks (#10056)
+			this.bindings = $( this.bindings.not( element ).get() );
+			this.focusable = $( this.focusable.not( element ).get() );
+			this.hoverable = $( this.hoverable.not( element ).get() );
+		},
+
+		_trigger: function( type, event, data ) {
+			var prop, orig;
+			var callback = this.options[ type ];
+
+			data = data || {};
+			event = eventer.proxy( event );
+			event.type = ( type === this.widgetEventPrefix ?
+				type :
+				this.widgetEventPrefix + type ).toLowerCase();
+
+			// The original event may come from any element
+			// so we need to reset the target on the new event
+			event.target = this.element[ 0 ];
+
+			// Copy original event properties over to the new event
+			orig = event.originalEvent;
+			if ( orig ) {
+				for ( prop in orig ) {
+					if ( !( prop in event ) ) {
+						event[ prop ] = orig[ prop ];
+					}
+				}
+			}
+
+			this.element.trigger( event, data );
+			return !( types.isFunction( callback ) &&
+				callback.apply( this.element[ 0 ], [ event ].concat( data ) ) === false ||
+				event.isDefaultPrevented() );
+		},
+
+
+	    enable: function() {
+	      return this._setOptions( { disabled: false } );
+	    },
+
+	    disable: function() {
+	      return this._setOptions( { disabled: true } );
+	    }
+
+
+	});
+
+	return JqPlugin;
+});
 define('skylark-domx-plugins/plugins',[
     "skylark-langx-ns",
     "skylark-langx-types",
@@ -20595,313 +21308,6 @@ define('skylark-domx-plugins/main',[
 });
 define('skylark-domx-plugins', ['skylark-domx-plugins/main'], function (main) { return main; });
 
-define('skylark-jquery/JqueryPlugin',[
-	"skylark-langx-types",
-	"skylark-langx-objects",
-	"skylark-langx-arrays",
-	"skylark-langx/langx",
-	"skylark-domx-data",
-	"skylark-domx-eventer",
-	"skylark-domx-plugins",
-	"skylark-domx-query",
-],function(types, objects, arrays, langx, datax, eventer, plugins, $){
-
-    var pluginUuid = 0;
-
-	var JqPlugin = plugins.Plugin.inherit({
-		klassName : "JqPlugin",
-
-        pluginEventPrefix: "",
-
-        options: {
-            // Callbacks
-            create: null
-        },
-
-        destroy: function() {
-            this.overrided();
-
-            // We can probably remove the unbind calls in 2.0
-            // all event bindings should go through this._on()
-            this.element
-                .off( this.eventNamespace );
-
-            // Clean up events and states
-            this.bindings.off( this.eventNamespace );
-        },
-
-        _construct : function(element,options) {
-            //this.options = langx.mixin( {}, this.options );
-
-            element = $( element || this.defaultElement || this )[ 0 ];
-            this.element = $( element );
-            this.uuid = pluginUuid++;
-            this.eventNamespace = "." + this.pluginName + this.uuid;
-
-            this.bindings = $();
-            this.classesElementLookup = {};
-
-			this.hoverable = $();
-			this.focusable = $();
-
-            if ( element !== this ) {
-                datax.data( element, this.pluginName, this );
-                this._on( true, this.element, {
-                    remove: function( event ) {
-                        if ( event.target === element ) {
-                            this.destroy();
-                        }
-                    }
-                } );
-                this.document = $( element.style ?
-
-                    // Element within the document
-                    element.ownerDocument :
-
-                    // Element is window or document
-                    element.document || element );
-                this.window = $( this.document[ 0 ].defaultView || this.document[ 0 ].parentWindow );
-            }
-
-            this.overrided(element,options);
-
-//            this.options = langx.mixin( {},
-//                this.options,
-//                this._getCreateOptions(),
-//                options );
-
-            this._create();
-
-            this._trigger( "create", null, this._getCreateEventData() );
-
-            this._init();
-        },
-
-
-	     _initOptions : function(options) {
-	     	options = langx.mixin(this._getCreateOptions(),options);
-
-			this.overrided(options);
-		},
-
-        _getCreateOptions: function() {
-            return {};
-        },
-
-        _getCreateEventData: langx.noop,
-
-		_super : function() {
-			if (this.overrided) {
-				return this.overrided.apply(this,arguments);
-			}
-		},
-
-		_superApply : function ( args ) {
-			if (this.overrided) {
-				return this.overrided.apply(this,args);
-			}
-		},
-
-        _create: langx.noop,
-
-        _init: langx.noop,
-
-		_classes: function( options ) {
-			var full = [];
-			var that = this;
-
-			options = objects.mixin( {
-				element: this.element,
-				classes: this.options.classes || {}
-			}, options );
-
-
-			function bindRemoveEvent() {
-				options.element.each( function( _, element ) {
-					var isTracked = langx.map( that.classesElementLookup, function( elements ) {
-						return elements;
-					} )
-						.some( function(elements ) {
-							return $(elements).is( element );
-						} );
-
-					if ( !isTracked ) {
-						that._on( $( element ), {
-							remove: "_untrackClassesElement"
-						} );
-					}
-				} );
-			}
-
-			function processClassString( classes, checkOption ) {
-				var current, i;
-				for ( i = 0; i < classes.length; i++ ) {
-					current = that.classesElementLookup[ classes[ i ] ] || $();
-					if ( options.add ) {
-						bindRemoveEvent();
-						current = $( langx.uniq( current.get().concat( options.element.get() ) ) );
-					} else {
-						current = $( current.not( options.element ).get() );
-					}
-					that.classesElementLookup[ classes[ i ] ] = current;
-					full.push( classes[ i ] );
-					if ( checkOption && options.classes[ classes[ i ] ] ) {
-						full.push( options.classes[ classes[ i ] ] );
-					}
-				}
-			}
-
-			if ( options.keys ) {
-				processClassString( options.keys.match( /\S+/g ) || [], true );
-			}
-			if ( options.extra ) {
-				processClassString( options.extra.match( /\S+/g ) || [] );
-			}
-
-			return full.join( " " );
-		},
-
-		_untrackClassesElement: function( event ) {
-			var that = this;
-			langx.each( that.classesElementLookup, function( key, value ) {
-				if ( arrays.inArray( event.target, value ) !== -1 ) {
-					that.classesElementLookup[ key ] = $( value.not( event.target ).get() );
-				}
-			} );
-
-			this._off( $( event.target ) );
-		},
-
-		_removeClass: function( element, keys, extra ) {
-			return this._toggleClass( element, keys, extra, false );
-		},
-
-		_addClass: function( element, keys, extra ) {
-			return this._toggleClass( element, keys, extra, true );
-		},
-
-		_toggleClass: function( element, keys, extra, add ) {
-			add = ( typeof add === "boolean" ) ? add : extra;
-			var shift = ( typeof element === "string" || element === null ),
-				options = {
-					extra: shift ? keys : extra,
-					keys: shift ? element : keys,
-					element: shift ? this.element : element,
-					add: add
-				};
-			options.element.toggleClass( this._classes( options ), add );
-			return this;
-		},
-
-		_on: function( suppressDisabledCheck, element, handlers ) {
-			var delegateElement;
-			var instance = this;
-
-			// No suppressDisabledCheck flag, shuffle arguments
-			if ( typeof suppressDisabledCheck !== "boolean" ) {
-				handlers = element;
-				element = suppressDisabledCheck;
-				suppressDisabledCheck = false;
-			}
-
-			// No element argument, shuffle and use this.element
-			if ( !handlers ) {
-				handlers = element;
-				element = this.element;
-				delegateElement = this.widget();
-			} else {
-				element = delegateElement = $( element );
-				this.bindings = this.bindings.add( element );
-			}
-
-			objects.each( handlers, function( event, handler ) {
-				function handlerProxy() {
-
-					// Allow widgets to customize the disabled handling
-					// - disabled as an array instead of boolean
-					// - disabled class as method for disabling individual parts
-					if ( !suppressDisabledCheck &&
-							( instance.options.disabled === true ||
-							$( this ).hasClass( "ui-state-disabled" ) ) ) {
-						return;
-					}
-					return ( typeof handler === "string" ? instance[ handler ] : handler )
-						.apply( instance, arguments );
-				}
-
-				// Copy the guid so direct unbinding works
-				if ( typeof handler !== "string" ) {
-					handlerProxy.guid = handler.guid =
-						handler.guid || handlerProxy.guid || $.guid++;
-				}
-
-				var match = event.match( /^([\w:-]*)\s*(.*)$/ );
-				var eventName = match[ 1 ] + instance.eventNamespace;
-				var selector = match[ 2 ];
-
-				if ( selector ) {
-					delegateElement.on( eventName, selector, handlerProxy );
-				} else {
-					element.on( eventName, handlerProxy );
-				}
-			} );
-		},
-
-		_off: function( element, eventName ) {
-			eventName = ( eventName || "" ).split( " " ).join( this.eventNamespace + " " ) +
-				this.eventNamespace;
-			element.off( eventName );
-
-			// Clear the stack to avoid memory leaks (#10056)
-			this.bindings = $( this.bindings.not( element ).get() );
-			this.focusable = $( this.focusable.not( element ).get() );
-			this.hoverable = $( this.hoverable.not( element ).get() );
-		},
-
-		_trigger: function( type, event, data ) {
-			var prop, orig;
-			var callback = this.options[ type ];
-
-			data = data || {};
-			event = eventer.proxy( event );
-			event.type = ( type === this.widgetEventPrefix ?
-				type :
-				this.widgetEventPrefix + type ).toLowerCase();
-
-			// The original event may come from any element
-			// so we need to reset the target on the new event
-			event.target = this.element[ 0 ];
-
-			// Copy original event properties over to the new event
-			orig = event.originalEvent;
-			if ( orig ) {
-				for ( prop in orig ) {
-					if ( !( prop in event ) ) {
-						event[ prop ] = orig[ prop ];
-					}
-				}
-			}
-
-			this.element.trigger( event, data );
-			return !( types.isFunction( callback ) &&
-				callback.apply( this.element[ 0 ], [ event ].concat( data ) ) === false ||
-				event.isDefaultPrevented() );
-		},
-
-
-	    enable: function() {
-	      return this._setOptions( { disabled: false } );
-	    },
-
-	    disable: function() {
-	      return this._setOptions( { disabled: true } );
-	    }
-
-
-	});
-
-	return JqPlugin;
-});
 /*!
  * jQuery UI Widget @VERSION
  * http://jqueryui.com

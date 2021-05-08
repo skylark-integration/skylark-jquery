@@ -1242,7 +1242,7 @@ define('skylark-jquery/JqueryPlugin',[
 	"skylark-langx/langx",
 	"skylark-domx-data",
 	"skylark-domx-eventer",
-	"skylark-domx-plugins",
+	"skylark-domx-plugins-base",
 	"skylark-domx-query",
 ],function(types, objects, arrays, langx, datax, eventer, plugins, $){
 
