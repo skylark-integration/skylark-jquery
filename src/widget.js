@@ -15,7 +15,7 @@
 
 define( [ 
 	"skylark-langx/langx",
-	"skylark-domx-plugins",
+	"skylark-domx-plugins-base",
 	"./core",
 	"./JqueryPlugin"
 ],  function(langx,splugins, $,JqPlugin ) {
