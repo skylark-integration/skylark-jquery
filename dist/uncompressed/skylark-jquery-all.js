@@ -15511,7 +15511,7 @@ define('skylark-domx-eventer/eventer',[
 
 
     function resized(elm) {
-        if (!resizedQueue.contains(elm)) {
+        if (!resizedQueue.includes(elm)) {
             resizedQueue.push(elm)
         }
 
@@ -16514,10 +16514,17 @@ define('skylark-domx-geom/geom',[
                 parent = offsetParent(elm);
 
             var props = {
-                top: coords.top + (scrollTop(parent) || 0),
-                left: coords.left + (scrollLeft(parent) || 0)
+                top: coords.top,
+                left: coords.left
+            };
+
+            if (langx.isDefined(props.top)) {
+                props.top = props.top + (scrollTop(parent) || 0);
             }
 
+            if (langx.isDefined(props.left)) {
+                props.left = props.left + (scrollLeft(parent) || 0);
+            } 
 
 
             if (styler.css(elm, "position") == "static") {
@@ -19261,7 +19268,8 @@ define('skylark-net-http/Xhr',[
                                 result = xhr.response; // new Blob([xhr.response]);
                             } else if (dataType == "arraybuffer") {
                                 result = xhr.response;
-                            } else if (dataType == "text") {
+                            } else {
+                                //if (dataType == "text" || dataType=="html")
                                 result = xhr.responseText;
                             }
                         } catch (e) { 
