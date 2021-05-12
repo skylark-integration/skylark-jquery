@@ -19040,6 +19040,33 @@ define('skylark-langx-emitter/Evented',[
 ],function(Emitter){
 	return Emitter;
 });
+define('skylark-langx-urls/urls',[
+  "skylark-langx-ns"
+],function(skylark){
+
+
+    return skylark.attach("langx.urls",{
+
+    });
+});
+
+
+
+define('skylark-langx-urls/isCrossOrigin',[
+    './urls'
+], function (urls) {
+    'use strict';
+
+    const isCrossOrigin = function (url, winLoc = window.location) {
+        const urlInfo = parseUrl(url);
+        const srcProtocol = urlInfo.protocol === ':' ? winLoc.protocol : urlInfo.protocol;
+        const crossOrigin = srcProtocol + urlInfo.host !== winLoc.protocol + winLoc.host;
+        return crossOrigin;
+    };
+
+    return urls.isCrossOrigin = isCrossOrigin;
+
+});
 define('skylark-net-http/http',[
   "skylark-langx-ns/ns",
 ],function(skylark){
@@ -19053,8 +19080,9 @@ define('skylark-net-http/Xhr',[
   "skylark-langx-funcs",
   "skylark-langx-async/Deferred",
   "skylark-langx-emitter/Evented",
+  "skylark-langx-urls/isCrossOrigin",
   "./http"
-],function(skylark,types,objects,arrays,funcs,Deferred,Evented,http){
+],function(skylark,types,objects,arrays,funcs,Deferred,Evented,isCrossOrigin,http){
 
     var each = objects.each,
         mixin = objects.mixin,
@@ -19125,7 +19153,7 @@ define('skylark-net-http/Xhr',[
             traditional : false,
             
             xhrFields : {
-                withCredentials : false
+                ///withCredentials : false
             }
         };
 
@@ -19331,7 +19359,9 @@ define('skylark-net-http/Xhr',[
                 }
 
                 if(!headers || !('X-Requested-With' in headers)){
-                    //xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest'); // del for s02
+                    if (!isCrossOrigin(url)) {// for s02
+                      xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest'); 
+                    }
                 }
 
 
