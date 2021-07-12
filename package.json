@@ -31,7 +31,6 @@
     "skylark-domx-noder": "git+https://github.com/skylark-domx/skylark-domx-noder.git",
     "skylark-domx-plugins-base": "git+https://github.com/skylark-domx-plugins/skylark-domx-plugins-base.git",
     "skylark-domx-query": "git+https://github.com/skylark-domx/skylark-domx-query.git",
-    "skylark-domx-scripter": "git+https://github.com/skylark-domx/skylark-domx-scripter.git",
     "skylark-domx-styler": "git+https://github.com/skylark-domx/skylark-domx-styler.git",
     "skylark-domx-velm": "git+https://github.com/skylark-domx/skylark-domx-velm.git",
     "skylark-langx": "git+https://github.com/skylark-langx/skylark-langx.git",
