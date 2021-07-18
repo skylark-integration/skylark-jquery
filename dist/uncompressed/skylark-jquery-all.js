@@ -773,7 +773,8 @@ define('skylark-langx-objects/_parse_mixin_args',[
     "./objects"
 ],function(types,objects) {
 
-    var isBoolean = types.isBoolean;
+    var slice = Array.prototype.slice,
+        isBoolean = types.isBoolean;
 
     function _parseMixinArgs(args) {
         var params = slice.call(arguments, 0),
@@ -817,6 +818,7 @@ define('skylark-langx-objects/extend',[
     "./objects",
     "./mixin"
 ],function(objects,mixin) {
+    var slice = Array.prototype.slice;
 
     function extend(target) {
         var deep, args = slice.call(arguments, 1);
@@ -11530,7 +11532,7 @@ function removeSelfClosingTags(xml) {
         if (html === undefined) {
             return node.innerHTML;
         } else {
-            this.empty(node);
+            empty(node);
             html = html || "";
             if (langx.isString(html)) {
                 html = html.replace( rxhtmlTag, "<$1></$2>" );
