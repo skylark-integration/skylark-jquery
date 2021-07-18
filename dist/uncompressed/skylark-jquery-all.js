@@ -101,19 +101,26 @@ define('skylark-langx-ns/_attach',[],function(){
             name = path[i++];
         }
 
-        ns[name] = obj2 || {};
+        if (ns[name]) {
+            if (obj2) {
+                throw new Error("This namespace already exists:" + path);
+            }
+
+        } else {
+            ns[name] = obj2 || {};
+        }
         return ns[name];
     }
 });
 define('skylark-langx-ns/ns',[
     "./_attach"
 ], function(_attach) {
-    var skylark = {
+    var root = {
     	attach : function(path,obj) {
-    		return _attach(skylark,path,obj);
+    		return _attach(root,path,obj);
     	}
     };
-    return skylark;
+    return root;
 });
 
 define('skylark-langx-ns/main',[
@@ -568,6 +575,133 @@ define('skylark-langx-objects/objects',[
         return keys;
     }
 
+    // Retrieve the names of an object's own properties.
+    // Delegates to **ECMAScript 5**'s native `Object.keys`.
+    function keys(obj) {
+        if (isObject(obj)) return [];
+        var keys = [];
+        for (var key in obj) if (has(obj, key)) keys.push(key);
+        return keys;
+    }
+
+    function has(obj, path) {
+        if (!isArray(path)) {
+            return obj != null && hasOwnProperty.call(obj, path);
+        }
+        var length = path.length;
+        for (var i = 0; i < length; i++) {
+            var key = path[i];
+            if (obj == null || !hasOwnProperty.call(obj, key)) {
+                return false;
+            }
+            obj = obj[key];
+        }
+        return !!length;
+    }
+
+
+    // Returns whether an object has a given set of `key:value` pairs.
+    function isMatch(object, attrs) {
+        var keys = keys(attrs), length = keys.length;
+        if (object == null) return !length;
+        var obj = Object(object);
+        for (var i = 0; i < length; i++) {
+          var key = keys[i];
+          if (attrs[key] !== obj[key] || !(key in obj)) return false;
+        }
+        return true;
+    }    
+
+
+    function removeItem(items, item) {
+        if (isArray(items)) {
+            var idx = items.indexOf(item);
+            if (idx != -1) {
+                items.splice(idx, 1);
+            }
+        } else if (isPlainObject(items)) {
+            for (var key in items) {
+                if (items[key] == item) {
+                    delete items[key];
+                    break;
+                }
+            }
+        }
+
+        return this;
+    }
+
+
+
+    // Retrieve the values of an object's properties.
+    function values(obj) {
+        var keys = allKeys(obj);
+        var length = keys.length;
+        var values = Array(length);
+        for (var i = 0; i < length; i++) {
+            values[i] = obj[keys[i]];
+        }
+        return values;
+    }
+
+
+    return skylark.attach("langx.objects",{
+        allKeys: allKeys,
+
+        attach : skylark.attach,
+
+        defaults : createAssigner(allKeys, true),
+
+        has: has,
+
+        isMatch: isMatch,
+
+        keys: keys,
+
+        removeItem: removeItem,
+
+        values: values
+    });
+
+
+});
+define('skylark-langx-objects/clone',[
+    "skylark-langx-types",
+    "./objects"
+],function(types,objects) {
+    var isPlainObject = types.isPlainObject,
+        isArray = types.isArray;
+
+    function clone( /*anything*/ src,checkCloneMethod) {
+        var copy;
+        if (src === undefined || src === null) {
+            copy = src;
+        } else if (checkCloneMethod && src.clone) {
+            copy = src.clone();
+        } else if (isArray(src)) {
+            copy = [];
+            for (var i = 0; i < src.length; i++) {
+                copy.push(clone(src[i]));
+            }
+        } else if (isPlainObject(src)) {
+            copy = {};
+            for (var key in src) {
+                copy[key] = clone(src[key]);
+            }
+        } else {
+            copy = src;
+        }
+
+        return copy;
+
+    }
+
+    return objects.clone = clone;
+});
+define('skylark-langx-objects/each',[
+    "./objects"
+],function(objects) {
+
     function each(obj, callback,isForEach) {
         var length, key, i, undef, value;
 
@@ -598,6 +732,92 @@ define('skylark-langx-objects/objects',[
         return this;
     }
 
+    return objects.each = each;
+});
+define('skylark-langx-objects/_mixin',[
+    "skylark-langx-types",
+    "./objects"
+],function(types,objects) {
+
+    var isPlainObject = types.isPlainObject;
+
+    function _mixin(target, source, deep, safe) {
+        for (var key in source) {
+            //if (!source.hasOwnProperty(key)) {
+            //    continue;
+            //}
+            if (safe && target[key] !== undefined) {
+                continue;
+            }
+            // if (deep && (isPlainObject(source[key]) || isArray(source[key]))) {
+            //    if (isPlainObject(source[key]) && !isPlainObject(target[key])) {
+            if (deep && isPlainObject(source[key])) {
+                if (!isPlainObject(target[key])) {
+                    target[key] = {};
+                }
+                //if (isArray(source[key]) && !isArray(target[key])) {
+                //    target[key] = [];
+                //}
+                _mixin(target[key], source[key], deep, safe);
+            } else if (source[key] !== undefined) {
+                target[key] = source[key]
+            }
+        }
+        return target;
+    }
+
+    return _mixin;
+});
+define('skylark-langx-objects/_parse_mixin_args',[
+    "skylark-langx-types",
+    "./objects"
+],function(types,objects) {
+
+    var isBoolean = types.isBoolean;
+
+    function _parseMixinArgs(args) {
+        var params = slice.call(arguments, 0),
+            target = params.shift(),
+            deep = false;
+        if (isBoolean(params[params.length - 1])) {
+            deep = params.pop();
+        }
+
+        return {
+            target: target,
+            sources: params,
+            deep: deep
+        };
+    }
+    
+    return _parseMixinArgs;
+});
+define('skylark-langx-objects/mixin',[
+	"skylark-langx-types",
+	"./objects",
+  "./_mixin",
+  "./_parse_mixin_args"
+],function(types,objects,_mixin,_parseMixinArgs) {
+
+
+    function mixin() {
+        var args = _parseMixinArgs.apply(this, arguments);
+
+        args.sources.forEach(function(source) {
+            _mixin(args.target, source, args.deep, false);
+        });
+        return args.target;
+    }
+
+
+    return objects.mixin = mixin;
+	
+});
+define('skylark-langx-objects/extend',[
+    "./objects",
+    "./mixin"
+],function(objects,mixin) {
+
     function extend(target) {
         var deep, args = slice.call(arguments, 1);
         if (typeof target == 'boolean') {
@@ -614,29 +834,11 @@ define('skylark-langx-objects/objects',[
         return target;
     }
 
-    // Retrieve the names of an object's own properties.
-    // Delegates to **ECMAScript 5**'s native `Object.keys`.
-    function keys(obj) {
-        if (isObject(obj)) return [];
-        var keys = [];
-        for (var key in obj) if (has(obj, key)) keys.push(key);
-        return keys;
-    }
-
-    function has(obj, path) {
-        if (!isArray(path)) {
-            return obj != null && hasOwnProperty.call(obj, path);
-        }
-        var length = path.length;
-        for (var i = 0; i < length; i++) {
-            var key = path[i];
-            if (obj == null || !hasOwnProperty.call(obj, key)) {
-                return false;
-            }
-            obj = obj[key];
-        }
-        return !!length;
-    }
+    return objects.extend = extend;
+});
+define('skylark-langx-objects/includes',[
+    "./objects"
+],function(objects) {
 
     /**
      * Checks if `value` is in `collection`. If `collection` is a string, it's
@@ -682,208 +884,10 @@ define('skylark-langx-objects/objects',[
     }
 
 
-    // Returns whether an object has a given set of `key:value` pairs.
-    function isMatch(object, attrs) {
-        var keys = keys(attrs), length = keys.length;
-        if (object == null) return !length;
-        var obj = Object(object);
-        for (var i = 0; i < length; i++) {
-          var key = keys[i];
-          if (attrs[key] !== obj[key] || !(key in obj)) return false;
-        }
-        return true;
-    }    
 
-    function _mixin(target, source, deep, safe) {
-        for (var key in source) {
-            //if (!source.hasOwnProperty(key)) {
-            //    continue;
-            //}
-            if (safe && target[key] !== undefined) {
-                continue;
-            }
-            // if (deep && (isPlainObject(source[key]) || isArray(source[key]))) {
-            //    if (isPlainObject(source[key]) && !isPlainObject(target[key])) {
-            if (deep && isPlainObject(source[key])) {
-                if (!isPlainObject(target[key])) {
-                    target[key] = {};
-                }
-                //if (isArray(source[key]) && !isArray(target[key])) {
-                //    target[key] = [];
-                //}
-                _mixin(target[key], source[key], deep, safe);
-            } else if (source[key] !== undefined) {
-                target[key] = source[key]
-            }
-        }
-        return target;
-    }
-
-    function _parseMixinArgs(args) {
-        var params = slice.call(arguments, 0),
-            target = params.shift(),
-            deep = false;
-        if (isBoolean(params[params.length - 1])) {
-            deep = params.pop();
-        }
-
-        return {
-            target: target,
-            sources: params,
-            deep: deep
-        };
-    }
-
-    function mixin() {
-        var args = _parseMixinArgs.apply(this, arguments);
-
-        args.sources.forEach(function(source) {
-            _mixin(args.target, source, args.deep, false);
-        });
-        return args.target;
-    }
-
-   // Return a copy of the object without the blacklisted properties.
-    function omit(obj, prop1,prop2) {
-        if (!obj) {
-            return null;
-        }
-        var result = mixin({},obj);
-        for(var i=1;i<arguments.length;i++) {
-            var pn = arguments[i];
-            if (pn in obj) {
-                delete result[pn];
-            }
-        }
-        return result;
-
-    }
-
-   // Return a copy of the object only containing the whitelisted properties.
-    function pick(obj,prop1,prop2) {
-        if (!obj) {
-            return null;
-        }
-        var result = {};
-        for(var i=1;i<arguments.length;i++) {
-            var pn = arguments[i];
-            if (pn in obj) {
-                result[pn] = obj[pn];
-            }
-        }
-        return result;
-    }
-
-    function removeItem(items, item) {
-        if (isArray(items)) {
-            var idx = items.indexOf(item);
-            if (idx != -1) {
-                items.splice(idx, 1);
-            }
-        } else if (isPlainObject(items)) {
-            for (var key in items) {
-                if (items[key] == item) {
-                    delete items[key];
-                    break;
-                }
-            }
-        }
-
-        return this;
-    }
-
-
-    function safeMixin() {
-        var args = _parseMixinArgs.apply(this, arguments);
-
-        args.sources.forEach(function(source) {
-            _mixin(args.target, source, args.deep, true);
-        });
-        return args.target;
-    }
-
-    // Retrieve the values of an object's properties.
-    function values(obj) {
-        var keys = allKeys(obj);
-        var length = keys.length;
-        var values = Array(length);
-        for (var i = 0; i < length; i++) {
-            values[i] = obj[keys[i]];
-        }
-        return values;
-    }
-
-    function clone( /*anything*/ src,checkCloneMethod) {
-        var copy;
-        if (src === undefined || src === null) {
-            copy = src;
-        } else if (checkCloneMethod && src.clone) {
-            copy = src.clone();
-        } else if (isArray(src)) {
-            copy = [];
-            for (var i = 0; i < src.length; i++) {
-                copy.push(clone(src[i]));
-            }
-        } else if (isPlainObject(src)) {
-            copy = {};
-            for (var key in src) {
-                copy[key] = clone(src[key]);
-            }
-        } else {
-            copy = src;
-        }
-
-        return copy;
-
-    }
-
-    function scall(obj,method,arg1,arg2) {
-        if (obj && obj[method]) {
-            var args = slice.call(arguments, 2);
-
-            return obj[method].apply(obj,args);
-        }
-    }
-
-    return skylark.attach("langx.objects",{
-        allKeys: allKeys,
-
-        attach : skylark.attach,
-
-        clone: clone,
-
-        defaults : createAssigner(allKeys, true),
-
-        each : each,
-
-        extend : extend,
-
-        has: has,
-
-        includes: includes,
-
-        isMatch: isMatch,
-
-        keys: keys,
-
-        mixin: mixin,
-
-        omit: omit,
-
-        pick: pick,
-
-        removeItem: removeItem,
-     
-        safeMixin: safeMixin,
-
-        scall,
-
-        values: values
-    });
-
-
+    return objects.includes = includes;
 });
-define('skylark-langx-objects/isEqual',[
+define('skylark-langx-objects/is-equal',[
 	"skylark-langx-types",
 	"./objects"
 ],function(types,objects) {
@@ -1006,6 +1010,49 @@ define('skylark-langx-objects/isEqual',[
     return objects.isEqual = isEqual;
 	
 });
+define('skylark-langx-objects/omit',[
+    "./objects"
+],function(objects) {
+
+   // Return a copy of the object without the blacklisted properties.
+    function omit(obj, prop1,prop2) {
+        if (!obj) {
+            return null;
+        }
+        var result = mixin({},obj);
+        for(var i=1;i<arguments.length;i++) {
+            var pn = arguments[i];
+            if (pn in obj) {
+                delete result[pn];
+            }
+        }
+        return result;
+
+    }
+    
+    return objects.omit = omit;
+});
+define('skylark-langx-objects/pick',[
+    "./objects"
+],function(objects) {
+
+   // Return a copy of the object only containing the whitelisted properties.
+    function pick(obj,prop1,prop2) {
+        if (!obj) {
+            return null;
+        }
+        var result = {};
+        for(var i=1;i<arguments.length;i++) {
+            var pn = arguments[i];
+            if (pn in obj) {
+                result[pn] = obj[pn];
+            }
+        }
+        return result;
+    }
+    
+    return objects.pick = pick;
+});
 define('skylark-langx-objects/result',[
 	"skylark-langx-types",
 	"./objects"
@@ -1036,10 +1083,67 @@ define('skylark-langx-objects/result',[
     return objects.result = result;
 	
 });
+define('skylark-langx-objects/safe-mixin',[
+	"./objects",
+  "./_mixin",
+  "./_parse_mixin_args"
+],function(objects,_mixin,_parseMixinArgs) {
+
+    function safeMixin() {
+        var args = _parseMixinArgs.apply(this, arguments);
+
+        args.sources.forEach(function(source) {
+            _mixin(args.target, source, args.deep, true);
+        });
+        return args.target;
+    }
+
+    return objects.safeMixin = safeMixin;
+});
+define('skylark-langx-objects/scall',[
+    "./objects"
+],function(objects) {
+
+    function scall(obj,method,arg1,arg2) {
+        if (obj && obj[method]) {
+            var args = slice.call(arguments, 2);
+
+            return obj[method].apply(obj,args);
+        }
+    }
+
+    return objects.scall = scall;
+});
+ define('skylark-langx-objects/shadow',[
+	"./objects"
+],function(objects) {
+
+    function shadow(obj, prop, value) {
+        Object.defineProperty(obj, prop, {
+            value,
+            enumerable: true,
+            configurable: true,
+            writable: false
+        });
+        return value;
+    }
+
+    return objects.shadow = shadow;
+});
 define('skylark-langx-objects/main',[
 	"./objects",
-	"./isEqual",
-	"./result"
+	"./clone",
+	"./each",
+	"./extend",
+	"./includes",
+	"./is-equal",
+	"./mixin",
+	"./omit",
+	"./pick",
+	"./result",
+	"./safe-mixin",
+	"./scall",
+	"./shadow"
 ],function(objects){
 	return objects;
 });
@@ -19504,178 +19608,6 @@ define('skylark-domx-fx/main',[
 });
 define('skylark-domx-fx', ['skylark-domx-fx/main'], function (main) { return main; });
 
-define('skylark-domx-scripter/scripter',[
-    "skylark-langx/skylark",
-    "skylark-langx/langx",
-    "skylark-domx-noder",
-    "skylark-domx-finder"
-], function(skylark, langx, noder, finder) {
-
-    var head = document.getElementsByTagName('head')[0],
-        scriptsByUrl = {},
-        scriptElementsById = {},
-        count = 0;
-
-    var rscriptType = ( /^$|^module$|\/(?:java|ecma)script/i );
-
-    function scripter() {
-        return scripter;
-    }
-
-
-    var preservedScriptAttributes = {
-        type: true,
-        src: true,
-        nonce: true,
-        noModule: true
-    };
-
-    function evaluate(code,node, doc ) {
-        doc = doc || document;
-
-        var i, val,
-            script = doc.createElement("script");
-
-        script.text = code;
-        if ( node ) {
-            for ( i in preservedScriptAttributes ) {
-
-                // Support: Firefox 64+, Edge 18+
-                // Some browsers don't support the "nonce" property on scripts.
-                // On the other hand, just using `getAttribute` is not enough as
-                // the `nonce` attribute is reset to an empty string whenever it
-                // becomes browsing-context connected.
-                // See https://github.com/whatwg/html/issues/2369
-                // See https://html.spec.whatwg.org/#nonce-attributes
-                // The `node.getAttribute` check was added for the sake of
-                // `jQuery.globalEval` so that it can fake a nonce-containing node
-                // via an object.
-                val = node[ i ] || node.getAttribute && node.getAttribute( i );
-                if ( val ) {
-                    script.setAttribute( i, val );
-                }
-            }
-        }
-        doc.head.appendChild( script ).parentNode.removeChild( script );
-
-        return this;
-    }
-
-    langx.mixin(scripter, {
-        /*
-         * Load a script from a url into the document.
-         * @param {} url
-         * @param {} loadedCallback
-         * @param {} errorCallback
-         */
-        loadJavaScript: function(url, loadedCallback, errorCallback) {
-            var script = scriptsByUrl[url];
-            if (!script) {
-                script = scriptsByUrl[url] = {
-                    state: 0, //0:unload,1:loaded,-1:loaderror
-                    loadedCallbacks: [],
-                    errorCallbacks: []
-                }
-            }
-
-            script.loadedCallbacks.push(loadedCallback);
-            script.errorCallbacks.push(errorCallback);
-
-            if (script.state === 1) {
-                script.node.onload();
-            } else if (script.state === -1) {
-                script.node.onerror();
-            } else {
-                var node = script.node = document.createElement("script"),
-                    id = script.id = (count++);
-
-                node.type = "text/javascript";
-                node.async = false;
-                node.defer = false;
-                startTime = new Date().getTime();
-                head.appendChild(node);
-
-                node.onload = function() {
-                        script.state = 1;
-
-                        var callbacks = script.loadedCallbacks,
-                            i = callbacks.length;
-
-                        while (i--) {
-                            callbacks[i]();
-                        }
-                        script.loadedCallbacks = [];
-                        script.errorCallbacks = [];
-                    },
-                    node.onerror = function() {
-                        script.state = -1;
-                        var callbacks = script.errorCallbacks,
-                            i = callbacks.length;
-
-                        while (i--) {
-                            callbacks[i]();
-                        }
-                        script.loadedCallbacks = [];
-                        script.errorCallbacks = [];
-                    };
-                node.src = url;
-
-                scriptElementsById[id] = node;
-            }
-            return script.id;
-        },
-        /*
-         * Remove the specified script from the document.
-         * @param {Number} id
-         */
-        deleteJavaScript: function(id) {
-            var node = scriptElementsById[id];
-            if (node) {
-                var url = node.src;
-                noder.remove(node);
-                delete scriptElementsById[id];
-                delete scriptsByUrl[url];
-            }
-        },
-
-        evaluate : evaluate,
-
-        html : function(node,value) {
-
-            var result = noder.html(node,value);
-
-            if (value !== undefined) {
-                var scripts = node.querySelectorAll('script');
-
-                for (var i =0; i<scripts.length; i++) {
-                    var node1 = scripts[i];
-                    if (rscriptType.test( node1.type || "" ) ) {
-                      evaluate(node1.textContent,node1);
-                    }
-                }       
-                return this;         
-            } else {
-                return result;
-            }
-
-
-
-        }
-    });
-
-    return skylark.attach("domx.scripter", scripter);
-});
-define('skylark-domx-scripter/main',[
-	"./scripter",
-	"skylark-domx-query"
-],function(scripter,$){
-
-    $.fn.html = $.wraps.wrapper_value(scripter.html, scripter, scripter.html);
-
-	return scripter;
-});
-define('skylark-domx-scripter', ['skylark-domx-scripter/main'], function (main) { return main; });
-
 define('skylark-jquery/core',[
 	"skylark-langx/skylark",
 	"skylark-langx/langx",
@@ -19688,7 +19620,7 @@ define('skylark-jquery/core',[
 	"skylark-domx-fx",
 	"skylark-domx-styler",
 	"skylark-domx-query",
-	"skylark-domx-scripter"
+	"skylark-langx-scripter"
 ],function(skylark,langx,browser,noder,datax,eventer,finder,forms,fx,styler,query,scripter){
 	var filter = Array.prototype.filter,
 		slice = Array.prototype.slice;
