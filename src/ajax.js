@@ -1,6 +1,6 @@
 define([
     "skylark-langx/langx",
-    "skylark-net-http/Xhr",
+    "skylark-net-http/xhr",
     "./core",
 ], function(langx,Xhr,$) {
     var jsonpID = 0;

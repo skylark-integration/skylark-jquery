@@ -5,5 +5,5 @@
  * @link www.skylarkjs.org
  * @license MIT
  */
-define(["./core","./ajax","./callbacks","./deferred","./queue","./JqueryPlugin","./widget"],function(e){return e});
+define(["./core","./ajax","./callbacks","./deferred","./queue","./jquery-plugin","./widget"],function(e){return e});
 //# sourceMappingURL=sourcemaps/main.js.map

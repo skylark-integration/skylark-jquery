@@ -4,7 +4,7 @@ define([
     "./callbacks",
     "./deferred",
     "./queue",
-    "./JqueryPlugin",
+    "./jquery-plugin",
     "./widget"
 ], function($) {
     return $;

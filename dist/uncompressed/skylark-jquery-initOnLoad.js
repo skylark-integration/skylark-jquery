@@ -392,7 +392,7 @@ define('skylark-jquery/core',[
 
 define('skylark-jquery/ajax',[
     "skylark-langx/langx",
-    "skylark-net-http/Xhr",
+    "skylark-net-http/xhr",
     "./core",
 ], function(langx,Xhr,$) {
     var jsonpID = 0;
@@ -1235,7 +1235,7 @@ define('skylark-jquery/queue',[
 
 });
 
-define('skylark-jquery/JqueryPlugin',[
+define('skylark-jquery/jquery-plugin',[
 	"skylark-langx-types",
 	"skylark-langx-objects",
 	"skylark-langx-arrays",
@@ -1561,7 +1561,7 @@ define( 'skylark-jquery/widget',[
 	"skylark-langx/langx",
 	"skylark-domx-plugins-base",
 	"./core",
-	"./JqueryPlugin"
+	"./jquery-plugin"
 ],  function(langx,splugins, $,JqPlugin ) {
 
 	var widgetUuid = 0;
@@ -1956,7 +1956,7 @@ define('skylark-jquery/main',[
     "./callbacks",
     "./deferred",
     "./queue",
-    "./JqueryPlugin",
+    "./jquery-plugin",
     "./widget"
 ], function($) {
     return $;

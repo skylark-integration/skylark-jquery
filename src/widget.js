@@ -17,7 +17,7 @@ define( [
 	"skylark-langx/langx",
 	"skylark-domx-plugins-base",
 	"./core",
-	"./JqueryPlugin"
+	"./jquery-plugin"
 ],  function(langx,splugins, $,JqPlugin ) {
 
 	var widgetUuid = 0;
