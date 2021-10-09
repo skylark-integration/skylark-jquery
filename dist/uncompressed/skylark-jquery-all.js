@@ -17302,16 +17302,16 @@ define('skylark-domx-forms/main',[
 });
 define('skylark-domx-forms', ['skylark-domx-forms/main'], function (main) { return main; });
 
-define('skylark-domx-fx/fx',[
+define('skylark-domx-transits/transits',[
     "skylark-langx/skylark",
     "skylark-langx/langx"
 ], function(skylark,langx) {
 
-    function fx() {
-        return fx;
+    function transits() {
+        return transits;
     }
 
-    langx.mixin(fx, {
+    langx.mixin(transits, {
         off: false,
         speeds: {
             normal: 400,
@@ -17320,7 +17320,7 @@ define('skylark-domx-fx/fx',[
         }
     });
 
-    return skylark.attach("domx.fx", fx);
+    return skylark.attach("domx.transits", transits);
 });
 define('skylark-domx-geom/geom',[
     "skylark-langx/skylark",
@@ -18683,26 +18683,6 @@ define('skylark-domx-geom/main',[
 });
 define('skylark-domx-geom', ['skylark-domx-geom/main'], function (main) { return main; });
 
-define('skylark-domx-transits/transits',[
-    "skylark-langx/skylark",
-    "skylark-langx/langx"
-], function(skylark,langx) {
-
-    function transits() {
-        return transits;
-    }
-
-    langx.mixin(transits, {
-        off: false,
-        speeds: {
-            normal: 400,
-            fast: 200,
-            slow: 600
-        }
-    });
-
-    return skylark.attach("domx.transits", transits);
-});
 define('skylark-domx-transits/transit',[
     "skylark-langx/langx",
     "skylark-domx-browser",
@@ -18869,146 +18849,6 @@ define('skylark-domx-transits/transit',[
     }
 
     return transits.transit = transit;
-
-});
-define('skylark-domx-animates/animates',[
-    "skylark-langx/skylark",
-    "skylark-langx/langx",
-    "skylark-domx-browser"
-], function(skylark,langx,browser) {
-
-    function animates() {
-        return animates;
-    }
-
-    langx.mixin(animates, {
-        off: false,
-        speeds: {
-            normal: 400,
-            fast: 200,
-            slow: 600
-        },
-        animationName : browser.normalizeCssProperty("animation-name"),
-        animationDuration : browser.normalizeCssProperty("animation-duration"),
-        animationDelay : browser.normalizeCssProperty("animation-delay"),
-        animationTiming : browser.normalizeCssProperty("animation-timing-function"),
-        animationEnd : browser.normalizeCssEvent('AnimationEnd'),
-
-        animateBaseClass : "animated"
-    });
-
-    return skylark.attach("domx.animates", animates);
-});
-define('skylark-domx-animates/animation',[
-    "skylark-langx/langx",
-    "skylark-domx-browser",
-    "skylark-domx-noder",
-    "skylark-domx-geom",
-    "skylark-domx-styler",
-    "skylark-domx-eventer",
-    "./animates"
-], function(langx, browser, noder, geom, styler, eventer,animates) {
-
-    var animationName = animates.animationName,
-        animationDuration = animates.animationDuration,
-        animationTiming = animates.animationTiming,
-        animationDelay = animates.animationDelay,
-
-        animationEnd = animates.animationEnd,
-
-        cssReset = {};
-
-
-    cssReset[animationName] =
-        cssReset[animationDuration] =
-        cssReset[animationDelay] =
-        cssReset[animationTiming] = "";
-
-    /*   
-     * Perform a custom animation.
-     * @param {Object} elm  
-     * @param {String} name
-     * @param {String} ease
-     * @param {Number or String} duration
-     * @param {Function} callback
-     * @param {Number or String} delay
-     */
-    function animation(elm, name, duration, ease, callback, delay) {
-        var cssValues = {};
-        if (langx.isPlainObject(duration)) {
-            ease = duration.easing;
-            callback = duration.complete;
-            delay = duration.delay;
-            duration = duration.duration;
-        }
-
-        if (langx.isString(duration)) {
-            duration = animates.speeds[duration];
-        }
-        if (duration === undefined) {
-            duration = animates.speeds.normal;
-        }
-        duration = duration / 1000;
-
-        if (langx.isFunction(ease)) {
-            callback = ease;
-            eace = "swing";
-        } else {
-            ease = ease || "swing";
-        }
-
-        if (delay) {
-            delay = delay / 1000;
-        } else {
-            delay = 0;
-        }
-        // keyframe animation
-        cssValues[animationName] = name;
-        cssValues[animationDuration] = duration + "s";
-        cssValues[animationTiming] = ease;
-
-
-        if (duration > 0) {
-            eventer.on(elm, animationEnd, callback);
-        }
-
-        // trigger page reflow so new elements can animate
-        elm.clientLeft;
-
-        styler.css(elm, cssValues);
-
-        return this;
-    }
-
-    return animates.animation = animation;
-
-});
-define('skylark-domx-fx/animate',[
-    "skylark-langx/langx",
-    "skylark-domx-transits/transit",
-    "skylark-domx-animates/animation",
-    "./fx"
-], function(langx, transit,animation,fx) {
-
-    /*   
-     * Perform a custom animation of a set of CSS properties.
-     * @param {Object} elm  
-     * @param {Number or String} properties
-     * @param {String} ease
-     * @param {Number or String} duration
-     * @param {Function} callback
-     * @param {Number or String} delay
-     */
-    function animate(elm, properties, duration, ease, callback, delay) {
-        if (langx.isString(properties)) {
-            return animation(elm,properties,duration,ease,callback,delay);
-        } else {
-            return transit(elm,properties,duration,ease,callback,delay);
-        }
-
-    }
-
-    return fx.animate = animate;
 
 });
 define('skylark-domx-transits/bounce',[
@@ -19984,6 +19824,166 @@ define('skylark-domx-transits/main',[
 });
 define('skylark-domx-transits', ['skylark-domx-transits/main'], function (main) { return main; });
 
+define('skylark-domx-fx/fx',[
+    "skylark-langx/skylark",
+    "skylark-langx/langx"
+], function(skylark,langx) {
+
+    function fx() {
+        return fx;
+    }
+
+    langx.mixin(fx, {
+        off: false,
+        speeds: {
+            normal: 400,
+            fast: 200,
+            slow: 600
+        }
+    });
+
+    return skylark.attach("domx.fx", fx);
+});
+define('skylark-domx-animates/animates',[
+    "skylark-langx/skylark",
+    "skylark-langx/langx",
+    "skylark-domx-browser"
+], function(skylark,langx,browser) {
+
+    function animates() {
+        return animates;
+    }
+
+    langx.mixin(animates, {
+        off: false,
+        speeds: {
+            normal: 400,
+            fast: 200,
+            slow: 600
+        },
+        animationName : browser.normalizeCssProperty("animation-name"),
+        animationDuration : browser.normalizeCssProperty("animation-duration"),
+        animationDelay : browser.normalizeCssProperty("animation-delay"),
+        animationTiming : browser.normalizeCssProperty("animation-timing-function"),
+        animationEnd : browser.normalizeCssEvent('AnimationEnd'),
+
+        animateBaseClass : "animated"
+    });
+
+    return skylark.attach("domx.animates", animates);
+});
+define('skylark-domx-animates/animation',[
+    "skylark-langx/langx",
+    "skylark-domx-browser",
+    "skylark-domx-noder",
+    "skylark-domx-geom",
+    "skylark-domx-styler",
+    "skylark-domx-eventer",
+    "./animates"
+], function(langx, browser, noder, geom, styler, eventer,animates) {
+
+    var animationName = animates.animationName,
+        animationDuration = animates.animationDuration,
+        animationTiming = animates.animationTiming,
+        animationDelay = animates.animationDelay,
+
+        animationEnd = animates.animationEnd,
+
+        cssReset = {};
+
+
+    cssReset[animationName] =
+        cssReset[animationDuration] =
+        cssReset[animationDelay] =
+        cssReset[animationTiming] = "";
+
+    /*   
+     * Perform a custom animation.
+     * @param {Object} elm  
+     * @param {String} name
+     * @param {String} ease
+     * @param {Number or String} duration
+     * @param {Function} callback
+     * @param {Number or String} delay
+     */
+    function animation(elm, name, duration, ease, callback, delay) {
+        var cssValues = {};
+        if (langx.isPlainObject(duration)) {
+            ease = duration.easing;
+            callback = duration.complete;
+            delay = duration.delay;
+            duration = duration.duration;
+        }
+
+        if (langx.isString(duration)) {
+            duration = animates.speeds[duration];
+        }
+        if (duration === undefined) {
+            duration = animates.speeds.normal;
+        }
+        duration = duration / 1000;
+
+        if (langx.isFunction(ease)) {
+            callback = ease;
+            eace = "swing";
+        } else {
+            ease = ease || "swing";
+        }
+
+        if (delay) {
+            delay = delay / 1000;
+        } else {
+            delay = 0;
+        }
+        // keyframe animation
+        cssValues[animationName] = name;
+        cssValues[animationDuration] = duration + "s";
+        cssValues[animationTiming] = ease;
+
+
+        if (duration > 0) {
+            eventer.on(elm, animationEnd, callback);
+        }
+
+        // trigger page reflow so new elements can animate
+        elm.clientLeft;
+
+        styler.css(elm, cssValues);
+
+        return this;
+    }
+
+    return animates.animation = animation;
+
+});
+define('skylark-domx-fx/animate',[
+    "skylark-langx/langx",
+    "skylark-domx-transits/transit",
+    "skylark-domx-animates/animation",
+    "./fx"
+], function(langx, transit,animation,fx) {
+
+    /*   
+     * Perform a custom animation of a set of CSS properties.
+     * @param {Object} elm  
+     * @param {Number or String} properties
+     * @param {String} ease
+     * @param {Number or String} duration
+     * @param {Function} callback
+     * @param {Number or String} delay
+     */
+    function animate(elm, properties, duration, ease, callback, delay) {
+        if (langx.isString(properties)) {
+            return animation(elm,properties,duration,ease,callback,delay);
+        } else {
+            return transit(elm,properties,duration,ease,callback,delay);
+        }
+
+    }
+
+    return fx.animate = animate;
+
+});
 define('skylark-domx-fx/bounce',[
     "skylark-domx-transits",
     "./fx"
@@ -20463,11 +20463,12 @@ define('skylark-jquery/core',[
 	"skylark-domx-eventer",
 	"skylark-domx-finder",
 	"skylark-domx-forms",
+	"skylark-domx-transits",
 	"skylark-domx-fx",
 	"skylark-domx-styler",
 	"skylark-domx-query",
 	"skylark-langx-scripter"
-],function(skylark,langx,browser,noder,datax,eventer,finder,forms,fx,styler,query,scripter){
+],function(skylark,langx,browser,noder,datax,eventer,finder,forms,transites,fx,styler,query,scripter){
 	var filter = Array.prototype.filter,
 		slice = Array.prototype.slice;
 
@@ -20595,7 +20596,7 @@ define('skylark-jquery/core',[
 	    };
 
 	    $.fn.moveto = function(x, y) {
-	        return this.animate({
+	        return this.transit({
 	            left: x + "px",
 	            top: y + "px"
 	        }, 0.4);

@@ -95,11 +95,12 @@ define('skylark-jquery/core',[
 	"skylark-domx-eventer",
 	"skylark-domx-finder",
 	"skylark-domx-forms",
+	"skylark-domx-transits",
 	"skylark-domx-fx",
 	"skylark-domx-styler",
 	"skylark-domx-query",
 	"skylark-langx-scripter"
-],function(skylark,langx,browser,noder,datax,eventer,finder,forms,fx,styler,query,scripter){
+],function(skylark,langx,browser,noder,datax,eventer,finder,forms,transites,fx,styler,query,scripter){
 	var filter = Array.prototype.filter,
 		slice = Array.prototype.slice;
 
@@ -227,7 +228,7 @@ define('skylark-jquery/core',[
 	    };
 
 	    $.fn.moveto = function(x, y) {
-	        return this.animate({
+	        return this.transit({
 	            left: x + "px",
 	            top: y + "px"
 	        }, 0.4);
