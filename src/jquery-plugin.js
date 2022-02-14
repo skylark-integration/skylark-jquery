@@ -66,7 +66,7 @@ define([
                 this.window = $( this.document[ 0 ].defaultView || this.document[ 0 ].parentWindow );
             }
 
-            this.overrided(element,options);
+            plugins.Plugin.prototype._construct.call(this,element,options);
 
 //            this.options = langx.mixin( {},
 //                this.options,

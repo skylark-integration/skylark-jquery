@@ -178,6 +178,9 @@ define([
 	    $.fx.step = {
 
         };
+        
+	    $.fn.animate =  $.wraps.wrapper_every_act(fx.animate, fx);
+
 
         $.speed = function( speed, easing, fn ) {
             var opt = speed && typeof speed === "object" ? $.extend( {}, speed ) : {

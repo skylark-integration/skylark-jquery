@@ -20634,6 +20634,9 @@ define('skylark-jquery/core',[
 	    $.fx.step = {
 
         };
+        
+	    $.fn.animate =  $.wraps.wrapper_every_act(fx.animate, fx);
+
 
         $.speed = function( speed, easing, fn ) {
             var opt = speed && typeof speed === "object" ? $.extend( {}, speed ) : {
@@ -22754,7 +22757,7 @@ define('skylark-jquery/jquery-plugin',[
                 this.window = $( this.document[ 0 ].defaultView || this.document[ 0 ].parentWindow );
             }
 
-            this.overrided(element,options);
+            plugins.Plugin.prototype._construct.call(this,element,options);
 
 //            this.options = langx.mixin( {},
 //                this.options,
