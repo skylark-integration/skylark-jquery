@@ -11,7 +11,8 @@ define([
 	"skylark-domx-fx",
 	"skylark-domx-styler",
 	"skylark-domx-query",
-	"skylark-langx-scripter"
+	"skylark-langx-scripter",
+	"skylark-domx-animates"
 ],function(skylark,langx,browser,noder,datax,eventer,finder,forms,transites,fx,styler,query,scripter){
 	var filter = Array.prototype.filter,
 		slice = Array.prototype.slice;
